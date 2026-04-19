@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Archive - Rick Justine Pabalan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../layouts/theme.css">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <script>
+        fetch('../layouts/header.html?v=' + Date.now())
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header').innerHTML = data;
+                // Fix relative paths in header when in subfolder
+                const links = document.querySelectorAll('a');
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (!href) return;
+
+                    if (href === 'index.html') link.href = "../index.html";
+                    if (href === 'about.html') link.href = "../about.html";
+
+                    if (href === 'portfolio/index.html') link.href = "index.html";
+                    if (href === 'portfolio/solarsystem.html') link.href = "solarsystem.html";
+                    if (href === 'portfolio/rotoscope.html') link.href = "rotoscope.html";
+                });
+
+                // Mark Portfolio as active when inside /portfolio
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const href = link.getAttribute('href') || '';
+                    if (href.includes('index.html')) link.classList.add('active');
+                });
+            });
+    </script>
+
+    <!-- Portfolio Section -->
+    <main>
+    <section id="portfolio" class="section">
+        <div class="container">
+            <div class="section-head">
+                <div>
+                    <div class="pill"><i class="fa-solid fa-layer-group"></i> Portfolio</div>
+                    <h1 class="section-title mt-3">Project Archive</h1>
+                    <p class="section-desc">Browse each project page from the cards below (or from the Portfolio dropdown in the navbar).</p>
+                </div>
+            </div>
+
+            <div class="grid-cards">
+                <div class="card-xl">
+                    <div class="stroke" style="border-radius: var(--radius-xl);">
+                        <div class="glass project-card lift">
+                            <div class="project-top">
+                                <div class="project-icon"><i class="fa-solid fa-cube"></i></div>
+                                <div class="text-end">
+                                    <div class="project-kicker">3D Rendering</div>
+                                    <div class="muted">Advanced</div>
+                                </div>
+                            </div>
+                            <div class="project-title">Blender — Solar System</div>
+                            <p class="project-desc">Procedural scene building and look development with a clean, data-driven presentation.</p>
+                            <div class="tags">
+                                <span class="tag">Blender</span>
+                                <span class="tag">PBR Shaders</span>
+                                <span class="tag">Automation</span>
+                            </div>
+                            <a class="card-link" href="solarsystem.html">
+                                <span>View project</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-xl">
+                    <div class="stroke" style="border-radius: var(--radius-xl);">
+                        <div class="glass project-card lift">
+                            <div class="project-top">
+                                <div class="project-icon"><i class="fa-solid fa-film"></i></div>
+                                <div class="text-end">
+                                    <div class="project-kicker">Post-Production</div>
+                                    <div class="muted">Precision</div>
+                                </div>
+                            </div>
+                            <div class="project-title">Rotoscoping — Workflow</div>
+                            <p class="project-desc">Frame-by-frame masking and subject isolation, organized into a readable technical flow.</p>
+                            <div class="tags">
+                                <span class="tag">After Effects</span>
+                                <span class="tag">Rotoscoping</span>
+                                <span class="tag">Compositing</span>
+                            </div>
+                            <a class="card-link" href="rotoscope.html">
+                                <span>View project</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="footer"></div>
+
+        <script>
+            fetch('../layouts/footer.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('footer').innerHTML = data;
+                });
+        </script>
+    </section>
+    </main>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blender | Rick Justine Pabalan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../layouts/theme.css">
+    <style>
+        .orbital-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            height: 100%;
+            transition: all 0.3s ease;
+        }
+        .planet-name {
+            color: #6366f1;
+            font-weight: 800;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .data-label {
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .data-value {
+            font-weight: 700;
+            font-family: var(--terminal-font);
+        }
+        .description-box {
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .description-box b {
+            color: #6366f1;
+        }
+        .orbital-title {
+            color: #6366f1;
+            font-weight: 900;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            text-transform: capitalize;
+        }
+        .input-section {
+            max-width: 600px;
+            margin: 0 auto 4rem;
+            text-align: center;
+        }
+        .sun-video {
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(7, 10, 15, 0.65);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header"></div>
+
+    <script>
+        fetch('../layouts/header.html?v=' + Date.now())
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header').innerHTML = data;
+                // Fix relative paths in header when in subfolder
+                const links = document.querySelectorAll('a');
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (!href) return;
+
+                    if (href === 'index.html') link.href = "../index.html";
+                    if (href === 'about.html') link.href = "../about.html";
+
+                    if (href === 'portfolio/index.html') link.href = "index.html";
+                    if (href === 'portfolio/solarsystem.html') link.href = "solarsystem.html";
+                    if (href === 'portfolio/rotoscope.html') link.href = "rotoscope.html";
+                });
+
+                // Mark Portfolio as active when inside /portfolio
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const href = link.getAttribute('href') || '';
+                    if (href.includes('solarsystem.html') || href.includes('index.html')) link.classList.add('active');
+                });
+            });
+    </script>
+
+    <section class="tutorial-section pt-5">
+        <div class="container">
+            <div class="text-center mb-5 fade-in">
+                <p class="card-category">3D RENDERING</p>
+                <h2 class="section-title">BLENDER</h2>
+                <p class="hero-description mx-auto">A procedural 3D simulation of celestial mechanics. 
+                    Utilizing computational geometry and physics-based rendering to reconstruct 
+                    planetary motion and orbital dynamics.</p>
+                <div class="mt-4 tech-tags justify-content-center">
+                    <span class="tech-tag">BLENDER</span>
+                    <span class="tech-tag">PYTHON_AUTOMATION</span>
+                    <span class="tech-tag">PBR_SHADERS</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="placeholder-box ratio ratio-16x9 my-5 fade-in glass-panel">
+                <div class="text-center">
+                    <i class="fas fa-play-circle" style="font-size: 5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Celestial Bodies & Orbital Dynamics Section -->
+    <section class="tutorial-section py-5">
+        <div class="container">
+            <h1 class="orbital-title">Celestial Bodies & Orbital Dynamics</h1>
+            
+            <div class="input-section fade-in">
+                <p class="card-description mb-4">Enter your age on Earth to sync the celestial telemetry across the system.</p>
+                <div class="input-group mb-3 glass-panel p-2">
+                    <input type="number" id="earthAgeInput" class="form-control glass-panel" placeholder="Enter Earth Age..." style="background: transparent; color: #fff; border: none; padding: 15px;">
+                    <button class="btn btn-primary" onclick="updateOrbitalData()" style="background: #6366f1; border: none; padding: 0 30px; border-radius: 12px; font-weight: 700;">SYNC DATA</button>
+                </div>
+            </div>
+
+            <div id="orbitalGrid" class="row g-4">
+                <!-- Cards will be injected here -->
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const planetaryData = [
+            {
+                name: "Sun",
+                age: "4.6 billion years",
+                revolutions: "N/A",
+                period: "N/A",
+                distance: "0 km",
+                description: "A colossal nuclear furnace at the system's center, the Sun powers every orbit and defines the environmental rhythm of nearby worlds.",
+                color: "radial-gradient(circle, #ffd700, #ff8c00)"
+            },
+            {
+                name: "Mercury",
+                period: "88 Earth days",
+                distance: "57.9 million km",
+                description: "Mercury races around the Sun with no true protective atmosphere, leaving its iron-rich terrain exposed to heat shock and constant impacts.",
+                color: "#8c8c8c",
+                ratio: 0.2408467
+            },
+            {
+                name: "Venus",
+                period: "225 Earth days",
+                distance: "108.2 million km",
+                description: "Venus hides beneath reflective acid clouds, where crushing pressure and trapped heat turn its surface into one of the harshest planetary environments.",
+                color: "#e3bb76",
+                ratio: 0.61519726
+            },
+            {
+                name: "Earth (Reference)",
+                period: "365.25 Earth days",
+                distance: "149.6 million km",
+                description: "Earth balances land, ocean, and atmosphere in a rare life-supporting system, with active geology and climate cycles shaping its dynamic surface.",
+                color: "#2271b3",
+                ratio: 1
+            },
+            {
+                name: "Mars",
+                period: "687 Earth days",
+                distance: "227.9 million km",
+                description: "Mars preserves canyons, dust plains, and polar ice, offering a record of ancient water activity and the possibility of past habitable conditions.",
+                color: "#c1440e",
+                ratio: 1.8808158
+            },
+            {
+                name: "Jupiter",
+                period: "4,333 Earth days",
+                distance: "778.6 million km",
+                description: "Jupiter dominates with immense gravity, turbulent cloud bands, and long-lived superstorms, while its moons form a miniature system of their own.",
+                color: "#d39c7e",
+                ratio: 11.862615
+            },
+            {
+                name: "Saturn",
+                period: "10,759 Earth days",
+                distance: "1.4 billion km",
+                description: "Saturn combines a low-density gas envelope with elegant ice-ring architecture, creating one of the most visually distinct structures in our system.",
+                color: "#c5ab6e",
+                ratio: 29.447498
+            },
+            {
+                name: "Uranus",
+                period: "30,687 Earth days",
+                distance: "2.9 billion km",
+                description: "Uranus spins on an extreme tilt, producing unusual seasonal patterns and a pale, methane-rich atmosphere wrapped around an icy interior.",
+                color: "#bbe1e4",
+                ratio: 84.016846
+            },
+            {
+                name: "Neptune",
+                period: "60,190 Earth days",
+                distance: "4.5 billion km",
+                description: "Neptune's deep-blue atmosphere hosts fierce jet streams and shifting storm systems, despite receiving only a faint fraction of solar energy.",
+                color: "#6081ff",
+                ratio: 164.79132
+            },
+            {
+                name: "Pluto",
+                period: "90,560 Earth days",
+                distance: "5.9 billion km",
+                description: "Pluto, a distant Kuiper Belt world, shows layered geology, frozen nitrogen plains, and a surprisingly active relationship with its largest moon, Charon.",
+                color: "#4a4a4a",
+                ratio: 248.09
+            }
+        ];
+
+        function updateOrbitalData() {
+            const earthAge = parseFloat(document.getElementById('earthAgeInput').value) || 0;
+            const grid = document.getElementById('orbitalGrid');
+            grid.innerHTML = '';
+
+            planetaryData.forEach(planet => {
+                let displayAge = planet.age;
+                let displayRevs = planet.revolutions;
+
+                if (planet.ratio) {
+                    displayAge = (earthAge / planet.ratio).toFixed(2) + " years";
+                    displayRevs = (earthAge / planet.ratio).toFixed(2);
+                }
+
+                const col = document.createElement('div');
+                col.className = 'col-lg-6 fade-in';
+                col.innerHTML = `
+                    <div class="orbital-card">
+                        <h3 class="planet-name">${planet.name}</h3>
+                        
+                        <div class="data-row">
+                            <span class="data-label">Age:</span>
+                            <span class="data-value">${displayAge}</span>
+                        </div>
+                        ${planet.name !== 'Sun' ? `
+                        <div class="data-row">
+                            <span class="data-label">Revolutions:</span>
+                            <span class="data-value">${displayRevs}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Orbital Period:</span>
+                            <span class="data-value">${planet.period}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Distance from Sun:</span>
+                            <span class="data-value">${planet.distance}</span>
+                        </div>
+                        ` : ''}
+
+                        <div class="description-box">
+                            <b>Description:</b> ${planet.description}
+                        </div>
+
+                        ${planet.name === 'Sun' ? `
+                        <div class="sun-video ratio ratio-16x9 mt-3">
+                            <iframe src="https://www.youtube.com/embed/OfuY-WecB9M"
+                                title="Sun Blender Video" frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                            </iframe>
+                        </div>
+                        ` : `
+                        <div class="placeholder-box" style="height: 300px; border-radius: 15px; background: ${planet.color};">
+                            <i class="fas fa-play-circle" style="font-size: 3rem; color: #fff; opacity: 0.8;"></i>
+                        </div>
+                        `}
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+        }
+
+        // Initialize with default age 0
+        updateOrbitalData();
+    </script>
+
+    <div id="footer"></div>
+
+    <script>
+        fetch('../layouts/footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('footer').innerHTML = data;
+            });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

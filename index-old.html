@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimedia & Authoring Portfolio - Rick Justine Pabalan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./layouts/style.css">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <script>
+        fetch('./layouts/header.html?v=' + Date.now())
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('header').innerHTML = data;
+                // Highlight active nav link
+                const currentPath = window.location.pathname;
+                const navLinks = document.querySelectorAll('.nav-link');
+                navLinks.forEach(link => {
+                    if (link.getAttribute('href').includes('index.html') || (currentPath === '/' && link.getAttribute('href') === 'index.html')) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+    </script>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-section">
+        <div class="container">
+            <div class="hero-content fade-in">
+                <p class="hero-subtitle">Visual Designer & Developer</p>
+                <h1 class="hero-title">MULTIMEDIA<br>& AUTHORING</h1>
+                <p class="hero-description">
+                    Crafting immersive digital experiences through advanced 3D synthesis 
+                    and precision motion isolation.
+                </p>
+                <div class="hero-cta">
+                    <a href="#portfolio" class="cta-button cta-primary">View Portfolio</a>
+                    <a href="about.html" class="cta-button cta-secondary">About Me</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio-section">
+        <div class="container">
+            <h2 class="section-title">PROJECT ARCHIVE</h2>
+            <p class="section-subtitle">Exploring the intersection of creativity and technology through multimedia design and development</p>
+            <div class="portfolio-grid">
+                <!-- Blender Project -->
+                <div class="portfolio-item">
+                    <a href="./portfolio/solarsystem.html" style="text-decoration: none;">
+                        <div class="portfolio-card fade-in blender-card">
+                            <div class="placeholder-box blender-placeholder">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-cube"></i>
+                                    <div class="icon-glow"></div>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-header">
+                                    <p class="card-category">3D RENDERING</p>
+                                    <div class="card-badge">ADVANCED</div>
+                                </div>
+                                <h3 class="card-title">BLENDER</h3>
+                                <p class="card-description">
+                                    Simulating planetary mechanics and cosmic environments using procedural generation and PBR shaders.
+                                </p>
+                                <div class="tech-tags">
+                                    <span class="tech-tag blender-tag">BLENDER</span>
+                                    <span class="tech-tag blender-tag">3D MODELING</span>
+                                    <span class="tech-tag blender-tag">PYTHON</span>
+                                </div>
+                                <div class="card-footer">
+                                    <span class="view-project">View Project →</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Rotoscoping -->
+                <div class="portfolio-item">
+                    <a href="./portfolio/rotoscope.html" style="text-decoration: none;">
+                        <div class="portfolio-card fade-in rotoscope-card">
+                            <div class="placeholder-box rotoscope-placeholder">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-film"></i>
+                                    <div class="icon-glow"></div>
+                                </div>
+                            </div>
+                            <div class="card-content">
+                                <div class="card-header">
+                                    <p class="card-category">POST-PRODUCTION</p>
+                                    <div class="card-badge">PRECISION</div>
+                                </div>
+                                <h3 class="card-title">ROTOSCOPING</h3>
+                                <p class="card-description">
+                                    High-precision frame-by-frame masking and subject extraction for advanced visual composition.
+                                </p>
+                                <div class="tech-tags">
+                                    <span class="tech-tag rotoscope-tag">AFTER EFFECTS</span>
+                                    <span class="tech-tag rotoscope-tag">ROTOSCOPING</span>
+                                    <span class="tech-tag rotoscope-tag">COMPOSITING</span>
+                                </div>
+                                <div class="card-footer">
+                                    <span class="view-project">View Project →</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="footer"></div>
+
+    <script>
+        fetch('./layouts/footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('footer').innerHTML = data;
+            });
+    </script>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
