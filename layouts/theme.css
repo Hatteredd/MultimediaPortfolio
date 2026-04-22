@@ -133,7 +133,7 @@ a { color: inherit; }
 .glass-nav {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 1000;
   border-bottom: 1px solid rgba(226, 231, 240, 0.11);
   background: rgba(8,12,18,0.72);
   backdrop-filter: blur(18px) saturate(140%);
