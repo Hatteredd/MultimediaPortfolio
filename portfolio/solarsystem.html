@@ -550,7 +550,7 @@
             <div class="calc-controls">
                 <div class="age-input-group">
                     <label for="earthAgeInput">Your age</label>
-                    <input type="number" id="earthAgeInput" value="30">
+                    <input type="number" id="earthAgeInput" placeholder="--">
                 </div>
                 <button class="calc-btn" onclick="updateOrbitalData()">
                     Calculate &rarr;
@@ -776,7 +776,7 @@
                 distance: "5.9B km",
                 description: "Pluto, a distant Kuiper Belt world, shows layered geology, frozen nitrogen plains, and a surprisingly active relationship with its largest moon, Charon.",
                 color: "#4a4a4a",
-                icon: "../images/pluto.png",
+                icon: "",
                 ratio: 248.09,
                 sizeLabel: "0.18x",
                 sizePercent: 2
@@ -846,7 +846,9 @@
 
         function updateOrbitalData() {
             const planet = planetaryData[currentPlanetIndex];
-            const earthAge = parseFloat(document.getElementById('earthAgeInput').value) || 0;
+            const ageInput = document.getElementById('earthAgeInput');
+            const earthAge = parseFloat(ageInput.value) || 0;
+            const hasValue = ageInput.value !== "";
 
             // Update center info
             document.getElementById('planetMainName').innerText = planet.name;
@@ -861,7 +863,9 @@
                     </video>
                 `;
             } else {
-                visual.innerHTML = `<img src="${planet.icon}" alt="${planet.name}" onerror="this.src='../images/image.png'" style="padding: 20px;">`;
+                // Check if icon exists, otherwise use placeholder icon
+                const iconPath = planet.icon || '../images/image.png';
+                visual.innerHTML = `<img src="${iconPath}" alt="${planet.name}" onerror="this.src='../images/image.png'" style="padding: 20px;">`;
             }
 
             document.getElementById('hostStarBadge').style.display = planet.isStar ? 'block' : 'none';
@@ -883,15 +887,15 @@
             const resultContext = document.getElementById('resultContext');
 
             resultLabel.innerText = `YOUR AGE ON ${planet.name.toUpperCase()}`;
-            resultContext.innerText = `Based on ${earthAge} Earth years`;
+            resultContext.innerText = hasValue ? `Based on ${earthAge} Earth years` : "Enter your Earth age to calculate";
 
-            if (planet.ratio) {
+            if (hasValue && planet.ratio) {
                 const planetAge = (earthAge / planet.ratio).toFixed(2);
                 resultValue.innerText = planetAge;
-            } else if (planet.isStar) {
-                resultValue.innerText = "-";
-            } else {
+            } else if (hasValue && !planet.ratio && !planet.isStar) {
                 resultValue.innerText = earthAge;
+            } else {
+                resultValue.innerText = "-";
             }
         }
 
