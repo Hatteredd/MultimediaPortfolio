@@ -6,7 +6,7 @@
     <title>Error - Page Not Found | Rick Justine Pabalan</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="./layouts/theme.css">
+    <link rel="stylesheet" href="/MultimediaPortfolio/layouts/theme.css">
     <style>
         .error-container {
             min-height: 100vh;
@@ -15,6 +15,7 @@
             justify-content: center;
             text-align: center;
             padding: 2rem;
+            background: #07090f; /* Fallback background */
         }
         .error-card {
             max-width: 500px;
@@ -74,7 +75,7 @@
                 The link you followed may be broken or the page has been moved.<br>
                 You will be redirected to the homepage in <span id="timer" class="countdown">5</span> seconds.
             </p>
-            <a href="index.html" class="btn-glass btn-accent w-100">
+            <a href="/MultimediaPortfolio/index.html" class="btn-glass btn-accent w-100">
                 <span>Go Home Now</span>
                 <i class="fa-solid fa-house"></i>
             </a>
@@ -99,7 +100,7 @@
             timerDisplay.textContent = seconds;
             if (seconds <= 0) {
                 clearInterval(countdown);
-                window.location.href = 'index.html';
+                window.location.href = '/MultimediaPortfolio/index.html';
             }
         }, 1000);
     </script>
