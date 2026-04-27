@@ -49,9 +49,7 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image:
-    radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-    linear-gradient(transparent 0, rgba(255,255,255,0.03) 1px, transparent 2px);
+  background-image: none;
   background-size: 90px 90px, 100% 64px;
   mix-blend-mode: overlay;
   opacity: 0.35;

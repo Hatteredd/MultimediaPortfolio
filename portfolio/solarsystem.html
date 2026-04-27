@@ -23,6 +23,13 @@
             overflow-x: hidden;
         }
 
+        .calculator-container video, 
+        .calculator-container img {
+            border: 0 !important;
+            outline: 0 !important;
+            box-shadow: none !important;
+        }
+
         .calculator-container {
             display: flex;
             flex-direction: column;
@@ -227,7 +234,6 @@
 
         .planet-nav-item.active .planet-icon {
             box-shadow: 0 0 20px var(--solar-orange);
-            border-color: var(--solar-orange);
             background: rgba(255, 180, 0, 0.1);
         }
 
@@ -235,21 +241,21 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            border: none;
+            border: none !important;
             transition: all 0.3s;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2px;
+            padding: 0;
         }
 
         .planet-icon img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border: none;
-            outline: none;
+            border: none !important;
+            outline: none !important;
         }
 
         .placeholder-dot {
@@ -291,7 +297,7 @@
             justify-content: center;
             padding: 2rem;
             position: relative;
-            background: radial-gradient(circle at center, rgba(255, 180, 0, 0.03) 0%, transparent 70%);
+            background: none;
         }
 
         .planet-visual-container {
@@ -299,22 +305,9 @@
             height: 300px;
             position: relative;
             margin-bottom: 2rem;
-        }
-
-        .planet-visual-container::before {
-            content: "";
-            position: absolute;
-            inset: -40px;
-            border: none;
-            border-radius: 50%;
-        }
-
-        .planet-visual-container::after {
-            content: "";
-            position: absolute;
-            inset: -80px;
-            border: none;
-            border-radius: 50%;
+            border: none !important;
+            box-shadow: none !important;
+            background: none !important;
         }
 
         .planet-visual {
@@ -324,15 +317,23 @@
             overflow: hidden;
             position: relative;
             z-index: 2;
-            box-shadow: none;
+            box-shadow: none !important;
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            mask-image: radial-gradient(white, black);
+            transform: translateZ(0);
         }
 
         .planet-visual video, .planet-visual img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border: none;
-            outline: none;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
         }
 
         .host-star-badge {
@@ -940,14 +941,15 @@
             document.getElementById('planetDescription').innerText = planet.description;
             
             const visual = document.getElementById('planetVisual');
+            visual.style.background = 'none';
             if (planet.video) {
                 visual.innerHTML = `
-                    <video autoplay loop muted playsinline>
-                        <source src="${planet.video}" type="video/mp4">
+                    <video autoplay loop muted playsinline poster="${planet.icon || ''}" style="border:none !important; outline:none !important; box-shadow:none !important; background:transparent !important;">
+                        <source src="${planet.video}" type="video/mp4" style="border:none !important; outline:none !important;">
                     </video>
                 `;
             } else if (planet.icon) {
-                visual.innerHTML = `<img src="${planet.icon}" alt="${planet.name}" onerror="this.parentElement.innerHTML='<div class=\'visual-placeholder\' style=\'background:${planet.color}\'></div>'">`;
+                visual.innerHTML = `<img src="${planet.icon}" alt="${planet.name}" style="border:none !important; outline:none !important; box-shadow:none !important; background:transparent !important;" onerror="this.parentElement.innerHTML='<div class=\'visual-placeholder\' style=\'background:${planet.color}\'></div>'">`;
             } else {
                 visual.innerHTML = `<div class="visual-placeholder" style="background: ${planet.color}"></div>`;
             }
