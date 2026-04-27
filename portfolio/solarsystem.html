@@ -301,19 +301,22 @@
         }
 
         .planet-visual-container {
-            width: 480px;
-            height: 480px;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16/9;
             position: relative;
             margin-bottom: 2rem;
             border: none !important;
-            box-shadow: none !important;
-            background: none !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+            background: rgba(255,255,255,0.03) !important;
+            border-radius: 24px;
+            overflow: hidden;
         }
 
         .planet-visual {
             width: 100%;
             height: 100%;
-            border-radius: 50%;
+            border-radius: 0;
             overflow: hidden;
             position: relative;
             z-index: 2;
@@ -324,12 +327,13 @@
             transform: translateZ(0);
         }
 
-        @supports (mask-image: radial-gradient(white, black)) or (-webkit-mask-image: radial-gradient(white, black)) {
+        /* Removed circle mask to show full video background */
+        /* @supports (mask-image: radial-gradient(white, black)) or (-webkit-mask-image: radial-gradient(white, black)) {
             .planet-visual {
                 -webkit-mask-image: -webkit-radial-gradient(white, black);
                 mask-image: radial-gradient(white, black);
             }
-        }
+        } */
 
         .planet-visual video, .planet-visual img {
             width: 100%;
@@ -570,8 +574,10 @@
                 font-size: 3rem;
             }
             .planet-visual-container {
-                width: 250px;
-                height: 250px;
+                width: 100%;
+                max-width: 400px;
+                aspect-ratio: 16/9;
+                height: auto;
             }
         }
     </style>
@@ -745,7 +751,8 @@
                 distance: "149.6M km",
                 description: "Earth is the only known planet that supports life. It has liquid water on its surface, a breathable atmosphere rich in nitrogen and oxygen, and a stable climate system. Its protective magnetic field and ozone layer help shield life from harmful solar radiation.",
                 color: "#2271b3",
-                icon: "",
+                icon: "../images/Earth.webp",
+                video: "./videos/Earth.mp4",
                 ratio: 1,
                 sizeLabel: "100%",
                 sizePercent: 100
@@ -953,9 +960,10 @@
             const visual = document.getElementById('planetVisual');
             visual.style.background = 'none';
             if (planet.video) {
+                const timestamp = Date.now();
                 visual.innerHTML = `
                     <video autoplay loop muted playsinline poster="${planet.icon || ''}" style="border:none !important; outline:none !important; box-shadow:none !important; background:transparent !important;">
-                        <source src="${planet.video}" type="video/mp4" style="border:none !important; outline:none !important;">
+                        <source src="${planet.video}?v=${timestamp}" type="video/mp4" style="border:none !important; outline:none !important;">
                     </video>
                 `;
             } else if (planet.icon) {
