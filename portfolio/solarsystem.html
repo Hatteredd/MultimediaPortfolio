@@ -321,9 +321,14 @@
             background: transparent !important;
             border: none !important;
             outline: none !important;
-            -webkit-mask-image: -webkit-radial-gradient(white, black);
-            mask-image: radial-gradient(white, black);
             transform: translateZ(0);
+        }
+
+        @supports (mask-image: radial-gradient(white, black)) or (-webkit-mask-image: radial-gradient(white, black)) {
+            .planet-visual {
+                -webkit-mask-image: -webkit-radial-gradient(white, black);
+                mask-image: radial-gradient(white, black);
+            }
         }
 
         .planet-visual video, .planet-visual img {

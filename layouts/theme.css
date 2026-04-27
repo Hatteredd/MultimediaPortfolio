@@ -47,10 +47,13 @@ body {
 body::before {
   content: "";
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   pointer-events: none;
   background-image: none;
-  background-size: 90px 90px, 100% 64px;
+  background-size: auto;
   mix-blend-mode: overlay;
   opacity: 0.35;
   z-index: 0;
@@ -68,9 +71,14 @@ a { color: inherit; }
   background: var(--glass);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
   border-radius: var(--radius-lg);
+}
+
+@supports (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px)) {
+  .glass {
+    backdrop-filter: blur(18px) saturate(130%);
+    -webkit-backdrop-filter: blur(18px) saturate(130%);
+  }
 }
 
 .glass--strong {
@@ -96,12 +104,20 @@ a { color: inherit; }
 .stroke::before {
   content: "";
   position: absolute;
-  inset: -1px;
+  top: -1px;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
   border-radius: inherit;
   background: var(--stroke-grad);
   opacity: 0.9;
   pointer-events: none;
-  filter: blur(0.2px);
+}
+
+@supports (filter: blur(0.2px)) {
+  .stroke::before {
+    filter: blur(0.2px);
+  }
 }
 .stroke > * {
   position: relative;
@@ -134,8 +150,13 @@ a { color: inherit; }
   z-index: 1000;
   border-bottom: 1px solid rgba(226, 231, 240, 0.11);
   background: rgba(8,12,18,0.72);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+@supports (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px)) {
+  .glass-nav {
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
 }
 
 .brand-mark {
@@ -192,7 +213,10 @@ a { color: inherit; }
 .hero-card::after {
   content: "";
   position: absolute;
-  inset: -1px;
+  top: -1px;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
   border-radius: inherit;
   background: radial-gradient(600px 220px at 10% 0%, rgba(248,203,90,0.14), transparent 60%),
               radial-gradient(520px 240px at 92% 10%, rgba(240,180,41,0.12), transparent 55%),
@@ -212,9 +236,15 @@ a { color: inherit; }
 }
 .hero-title .grad {
   background: var(--accent-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent-a); /* Fallback */
+}
+
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .hero-title .grad {
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 .hero-lead {
@@ -294,7 +324,10 @@ a { color: inherit; }
 .project-card::before {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: radial-gradient(500px 260px at 0% 0%, rgba(248,203,90,0.13), transparent 50%),
               radial-gradient(520px 260px at 100% 0%, rgba(153,163,184,0.11), transparent 50%),
               radial-gradient(520px 260px at 60% 120%, rgba(211,143,16,0.08), transparent 55%);
@@ -396,8 +429,13 @@ a { color: inherit; }
   padding: 2.6rem 0;
   border-top: 1px solid rgba(255,255,255,0.10);
   background: rgba(7,10,18,0.55);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+@supports (backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px)) {
+  .glass-footer {
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
 }
 
 /* Small utilities */
