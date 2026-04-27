@@ -254,7 +254,7 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.05);
+            background: transparent;
         }
 
         .visual-placeholder {
@@ -266,7 +266,6 @@
             justify-content: center;
             opacity: 0.6;
             filter: blur(2px);
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
         }
 
         .planet-label {
@@ -944,7 +943,7 @@
                     </video>
                 `;
             } else if (planet.icon) {
-                visual.innerHTML = `<img src="${planet.icon}" alt="${planet.name}" onerror="this.parentElement.innerHTML='<div class=\'visual-placeholder\' style=\'background:${planet.color}\'></div>'" style="padding: 20px;">`;
+                visual.innerHTML = `<img src="${planet.icon}" alt="${planet.name}" onerror="this.parentElement.innerHTML='<div class=\'visual-placeholder\' style=\'background:${planet.color}\'></div>'">`;
             } else {
                 visual.innerHTML = `<div class="visual-placeholder" style="background: ${planet.color}"></div>`;
             }
