@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Page Not Found | Rick Justine Pabalan</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./layouts/theme.css">
+    <style>
+        .error-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        .error-card {
+            max-width: 500px;
+            width: 100%;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .error-code {
+            font-size: 6rem;
+            font-weight: 900;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+        .error-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .error-msg {
+            color: var(--text-1);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+        .countdown {
+            font-family: var(--font-mono);
+            color: var(--accent-a);
+            font-weight: 700;
+        }
+        .progress-bar-container {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            margin-top: 2rem;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--accent-grad);
+            width: 100%;
+            transition: width 5s linear;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="glass glass--strong error-card fade-in">
+            <div class="error-code">ERROR</div>
+            <h1 class="error-title">Page Not Found</h1>
+            <p class="error-msg">
+                The link you followed may be broken or the page has been moved.<br>
+                You will be redirected to the homepage in <span id="timer" class="countdown">5</span> seconds.
+            </p>
+            <a href="index.html" class="btn-glass btn-accent w-100">
+                <span>Go Home Now</span>
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let seconds = 5;
+        const timerDisplay = document.getElementById('timer');
+        const progressBar = document.getElementById('progressBar');
+        
+        // Start progress bar animation
+        setTimeout(() => {
+            progressBar.style.width = '0%';
+        }, 10);
+
+        const countdown = setInterval(() => {
+            seconds--;
+            timerDisplay.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(countdown);
+                window.location.href = 'index.html';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
