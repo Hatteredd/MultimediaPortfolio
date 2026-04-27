@@ -235,7 +235,7 @@
             width: 42px;
             height: 42px;
             border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: none;
             transition: all 0.3s;
             overflow: hidden;
             display: flex;
@@ -248,6 +248,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            border: none;
+            outline: none;
         }
 
         .placeholder-dot {
@@ -303,7 +305,7 @@
             content: "";
             position: absolute;
             inset: -40px;
-            border: 1px solid rgba(255, 180, 0, 0.05);
+            border: none;
             border-radius: 50%;
         }
 
@@ -311,7 +313,7 @@
             content: "";
             position: absolute;
             inset: -80px;
-            border: 1px solid rgba(255, 180, 0, 0.03);
+            border: none;
             border-radius: 50%;
         }
 
@@ -322,13 +324,15 @@
             overflow: hidden;
             position: relative;
             z-index: 2;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            box-shadow: none;
         }
 
         .planet-visual video, .planet-visual img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            border: none;
+            outline: none;
         }
 
         .host-star-badge {
