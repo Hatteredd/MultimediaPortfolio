@@ -146,6 +146,29 @@
             width: 70px;
             font-weight: 700;
             text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .age-input-group input.invalid {
+            border-color: #ff4444;
+            box-shadow: 0 0 5px rgba(255, 68, 68, 0.3);
+        }
+
+        .validation-msg {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            color: #ff4444;
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-top: 4px;
+            display: none;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .validation-msg.visible {
+            display: block;
         }
 
         .calc-btn {
@@ -567,9 +590,10 @@
                 <span>Celestial Bodies & Orbital Dynamics</span>
             </div>
             <div class="calc-controls">
-                <div class="age-input-group">
+                <div class="age-input-group" style="position: relative;">
                     <label for="earthAgeInput">Your age</label>
-                    <input type="number" id="earthAgeInput" placeholder="--">
+                    <input type="number" id="earthAgeInput" placeholder="--" min="0" step="any">
+                    <div id="validationMsg" class="validation-msg">Invalid age</div>
                 </div>
                 <button class="calc-btn" onclick="updateOrbitalData()">
                     Calculate &rarr;
@@ -808,6 +832,15 @@
             renderSidebar();
             renderSizeComparison();
             updateOrbitalData();
+
+            // Add real-time validation feedback
+            const ageInput = document.getElementById('earthAgeInput');
+            ageInput.addEventListener('input', updateOrbitalData);
+            ageInput.addEventListener('keypress', function(e) {
+                if (e.key === '-' || e.key === 'e' || e.key === 'E') {
+                    e.preventDefault();
+                }
+            });
         }
 
         function renderSidebar() {
@@ -874,8 +907,27 @@
         function updateOrbitalData() {
             const planet = planetaryData[currentPlanetIndex];
             const ageInput = document.getElementById('earthAgeInput');
-            const earthAge = parseFloat(ageInput.value) || 0;
-            const hasValue = ageInput.value !== "";
+            const validationMsg = document.getElementById('validationMsg');
+            
+            const rawValue = ageInput.value;
+            const earthAge = parseFloat(rawValue);
+            const hasValue = rawValue !== "";
+            
+            // Reset validation state
+            ageInput.classList.remove('invalid');
+            validationMsg.classList.remove('visible');
+
+            // Proper Validation: Check for invalid character (handled by type=number mostly), 
+            // empty but interacted, or negative number
+            let isValid = true;
+            if (hasValue) {
+                if (isNaN(earthAge) || earthAge < 0) {
+                    isValid = false;
+                    ageInput.classList.add('invalid');
+                    validationMsg.innerText = earthAge < 0 ? "No negatives" : "Invalid input";
+                    validationMsg.classList.add('visible');
+                }
+            }
 
             // Update center info
             document.getElementById('planetMainName').innerText = planet.name;
@@ -914,14 +966,19 @@
             const resultContext = document.getElementById('resultContext');
 
             resultLabel.innerText = `YOUR AGE ON ${planet.name.toUpperCase()}`;
-            resultContext.innerText = hasValue ? `Based on ${earthAge} Earth years` : "Enter your Earth age to calculate";
 
-            if (hasValue && planet.ratio) {
-                const planetAge = (earthAge / planet.ratio).toFixed(2);
-                resultValue.innerText = planetAge;
-            } else if (hasValue && !planet.ratio && !planet.isStar) {
-                resultValue.innerText = earthAge;
+            if (isValid && hasValue) {
+                resultContext.innerText = `Based on ${earthAge} Earth years`;
+                if (planet.ratio) {
+                    const planetAge = (earthAge / planet.ratio).toFixed(2);
+                    resultValue.innerText = planetAge;
+                } else if (!planet.ratio && !planet.isStar) {
+                    resultValue.innerText = earthAge;
+                } else {
+                    resultValue.innerText = "-";
+                }
             } else {
+                resultContext.innerText = !isValid ? "Fix input to calculate" : "Enter your Earth age to calculate";
                 resultValue.innerText = "-";
             }
         }
