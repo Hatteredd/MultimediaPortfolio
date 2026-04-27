@@ -578,7 +578,7 @@
 </head>
 
 <body>
-    <div id="header-container"></div>
+    <div id="header"></div>
 
     <section class="solar-hero-section">
         <div class="solar-hero-container">
@@ -1007,7 +1007,7 @@
         fetch('../layouts/header.html?v=' + Date.now())
             .then(response => response.text())
             .then(data => {
-                document.getElementById('header-container').innerHTML = data;
+                document.getElementById('header').innerHTML = data;
                 // Fix relative paths in header when in subfolder
                 const links = document.querySelectorAll('a');
                 links.forEach(link => {
@@ -1018,6 +1018,12 @@
                     if (href === 'portfolio/index.html') link.href = "index.html";
                     if (href === 'portfolio/solarsystem.html') link.href = "solarsystem.html";
                     if (href === 'portfolio/rotoscope.html') link.href = "rotoscope.html";
+                });
+
+                // Mark Portfolio as active when inside /portfolio
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    const href = link.getAttribute('href') || '';
+                    if (href.includes('solarsystem.html') || href.includes('index.html')) link.classList.add('active');
                 });
             });
     </script>

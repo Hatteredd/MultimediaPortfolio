@@ -8,7 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./layouts/style.css">
+    <link rel="stylesheet" href="./layouts/theme.css">
 </head>
 
 <body>
@@ -24,103 +24,113 @@
                 const currentPath = window.location.pathname;
                 const navLinks = document.querySelectorAll('.nav-link');
                 navLinks.forEach(link => {
-                    if (link.getAttribute('href').includes('index.html') || (currentPath === '/' && link.getAttribute('href') === 'index.html')) {
+                    const href = link.getAttribute('href');
+                    if (href === 'index.html' || (currentPath.endsWith('/') && href === 'index.html')) {
                         link.classList.add('active');
                     }
                 });
             });
     </script>
 
+    <main>
     <!-- Hero Section -->
-    <section id="home" class="hero-section">
+    <section id="home" class="hero">
         <div class="container">
-            <div class="hero-content fade-in">
-                <p class="hero-subtitle">Visual Designer & Developer</p>
-                <h1 class="hero-title">MULTIMEDIA<br>& AUTHORING</h1>
-                <p class="hero-description">
-                    Crafting immersive digital experiences through advanced 3D synthesis 
-                    and precision motion isolation.
-                </p>
-                <div class="hero-cta">
-                    <a href="#portfolio" class="cta-button cta-primary">View Portfolio</a>
-                    <a href="about.html" class="cta-button cta-secondary">About Me</a>
+            <div class="glass glass--strong hero-card fade-in">
+                <div style="max-width: 800px;">
+                    <div class="pill mb-4"><i class="fa-solid fa-sparkles"></i> Visual Designer & Developer</div>
+                    <h1 class="hero-title">MULTIMEDIA <span class="grad">& AUTHORING</span></h1>
+                    <p class="hero-lead mb-5">
+                        Crafting immersive digital experiences through advanced 3D synthesis 
+                        and precision motion isolation.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="#portfolio" class="btn-glass btn-accent">
+                            View Portfolio <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="about.html" class="btn-glass">
+                            About Me <i class="fa-solid fa-user"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Portfolio Section -->
-    <section id="portfolio" class="portfolio-section">
+    <section id="portfolio" class="section">
         <div class="container">
-            <h2 class="section-title">PROJECT ARCHIVE</h2>
-            <p class="section-subtitle">Exploring the intersection of creativity and technology through multimedia design and development</p>
-            <div class="portfolio-grid">
+            <div class="section-head">
+                <div>
+                    <h2 class="section-title">PROJECT ARCHIVE</h2>
+                    <p class="section-desc">Exploring the intersection of creativity and technology through multimedia design and development</p>
+                </div>
+            </div>
+            
+            <div class="grid-cards">
                 <!-- Blender Project -->
-                <div class="portfolio-item">
-                    <a href="./portfolio/solarsystem.html" style="text-decoration: none;">
-                        <div class="portfolio-card fade-in blender-card">
-                            <div class="placeholder-box blender-placeholder">
-                                <div class="icon-wrapper">
-                                    <i class="fas fa-cube"></i>
-                                    <div class="icon-glow"></div>
-                                </div>
+                <div class="card-xl">
+                    <div class="glass project-card lift fade-in">
+                        <div class="project-top">
+                            <div class="project-icon">
+                                <i class="fas fa-cube" style="font-size: 1.5rem; color: var(--accent-b);"></i>
                             </div>
-                            <div class="card-content">
-                                <div class="card-header">
-                                    <p class="card-category">3D RENDERING</p>
-                                    <div class="card-badge">ADVANCED</div>
-                                </div>
-                                <h3 class="card-title">BLENDER</h3>
-                                <p class="card-description">
-                                    Simulating planetary mechanics and cosmic environments using procedural generation and PBR shaders.
-                                </p>
-                                <div class="tech-tags">
-                                    <span class="tech-tag blender-tag">BLENDER</span>
-                                    <span class="tech-tag blender-tag">3D MODELING</span>
-                                    <span class="tech-tag blender-tag">PYTHON</span>
-                                </div>
-                                <div class="card-footer">
-                                    <span class="view-project">View Project →</span>
-                                </div>
-                            </div>
+                            <div class="project-kicker">3D RENDERING</div>
                         </div>
-                    </a>
+                        <h3 class="project-title">Celestial Bodies</h3>
+                        <p class="project-desc">
+                            Simulating planetary mechanics and cosmic environments using procedural generation and PBR shaders.
+                        </p>
+                        <div class="tags">
+                            <span class="tag">BLENDER</span>
+                            <span class="tag">3D MODELING</span>
+                            <span class="tag">PYTHON</span>
+                        </div>
+                        <a href="./portfolio/solarsystem.html" class="card-link">
+                            Explore Simulation <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Rotoscoping -->
-                <div class="portfolio-item">
-                    <a href="./portfolio/rotoscope.html" style="text-decoration: none;">
-                        <div class="portfolio-card fade-in rotoscope-card">
-                            <div class="placeholder-box rotoscope-placeholder">
-                                <div class="icon-wrapper">
-                                    <i class="fas fa-film"></i>
-                                    <div class="icon-glow"></div>
-                                </div>
+                <div class="card-xl">
+                    <div class="glass project-card lift fade-in">
+                        <div class="project-top">
+                            <div class="project-icon">
+                                <i class="fas fa-film" style="font-size: 1.5rem; color: var(--accent-c);"></i>
                             </div>
-                            <div class="card-content">
-                                <div class="card-header">
-                                    <p class="card-category">POST-PRODUCTION</p>
-                                    <div class="card-badge">PRECISION</div>
-                                </div>
-                                <h3 class="card-title">ROTOSCOPING</h3>
-                                <p class="card-description">
-                                    High-precision frame-by-frame masking and subject extraction for advanced visual composition.
-                                </p>
-                                <div class="tech-tags">
-                                    <span class="tech-tag rotoscope-tag">AFTER EFFECTS</span>
-                                    <span class="tech-tag rotoscope-tag">ROTOSCOPING</span>
-                                    <span class="tech-tag rotoscope-tag">COMPOSITING</span>
-                                </div>
-                                <div class="card-footer">
-                                    <span class="view-project">View Project →</span>
-                                </div>
-                            </div>
+                            <div class="project-kicker">POST-PRODUCTION</div>
                         </div>
-                    </a>
+                        <h3 class="project-title">Advanced Rotoscoping</h3>
+                        <p class="project-desc">
+                            High-precision frame-by-frame masking and subject extraction for advanced visual composition.
+                        </p>
+                        <div class="tags">
+                            <span class="tag">AFTER EFFECTS</span>
+                            <span class="tag">ROTOSCOPING</span>
+                            <span class="tag">COMPOSITING</span>
+                        </div>
+                        <a href="./portfolio/rotoscope.html" class="card-link">
+                            View Workflow <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
+
+    <!-- Global Disclaimer Section -->
+    <section class="section pb-5 pt-0">
+        <div class="container">
+            <div class="glass p-4" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05);">
+                <div class="muted" style="font-size: 0.85rem; line-height: 1.7;">
+                    <span class="fw-bold text-white mb-2 d-block" style="letter-spacing: 0.05em; font-size: 0.9rem;">DISCLAIMER</span>
+                    This website and all of its content are created and presented for educational purposes only. Any images, videos, audio, and other materials used are the property of their respective owners, and full credit is given where due. No copyright infringement is intended, and this work is not meant for commercial use or distribution.
+                </div>
+            </div>
+        </div>
+    </section>
+    </main>
 
     <div id="footer"></div>
 

@@ -36,7 +36,7 @@
                 // Mark Portfolio as active when inside /portfolio
                 document.querySelectorAll('.nav-link').forEach(link => {
                     const href = link.getAttribute('href') || '';
-                    if (href.includes('index.html')) link.classList.add('active');
+                    if (href === 'index.html') link.classList.add('active');
                 });
             });
     </script>
