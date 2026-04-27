@@ -5,25 +5,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multimedia & Authoring Portfolio - Rick Justine Pabalan</title>
+
+    <!-- Bootstrap -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Your CSS -->
     <link rel="stylesheet" href="./layouts/theme.css">
 </head>
 
 <body>
     <div id="header"></div>
-
-    <script>
-        fetch('./layouts/header.html?v=' + Date.now())
-            .then(r => r.text())
-            .then(html => {
-                document.getElementById('header').innerHTML = html;
-                const navLinks = document.querySelectorAll('.nav-link');
-                navLinks.forEach(link => {
-                    if ((link.getAttribute('href') || '').includes('index.html')) link.classList.add('active');
-                });
-            });
-    </script>
 
     <main>
         <section class="hero">
@@ -31,7 +25,7 @@
                 <div class="glass glass--strong hero-card">
                     <div class="row g-4 align-items-center">
                         <div class="col-lg-9">
-                            <span class="pill"><i class="fa-solid fa-sparkles"></i> Visual Designer & Developer</span>
+                            <span class="pill">Visual Designer & Developer</span>
                             <h1 class="hero-title mt-3 mb-3">
                                 Multimedia <span class="grad">&</span><br />
                                 Authoring
@@ -42,21 +36,17 @@
                             <div class="d-flex flex-wrap gap-2 mt-4">
                                 <a class="btn-glass btn-accent" href="#projects">
                                     <span>Explore Projects</span>
-                                    <i class="fa-solid fa-arrow-right"></i>
                                 </a>
                                 <a class="btn-glass" href="portfolio/index.html">
                                     <span>Project Archive</span>
-                                    <i class="fa-solid fa-layer-group"></i>
                                 </a>
                                 <a class="btn-glass" href="about.html">
                                     <span>About</span>
-                                    <i class="fa-solid fa-user"></i>
                                 </a>
                             </div>
 
                             <div class="glass mt-4 p-3 p-md-4" style="border-radius: 18px;">
                                 <div class="d-flex align-items-center gap-2 mb-3">
-                                    <i class="fa-solid fa-microchip" style="color: var(--accent-a);"></i>
                                     <div class="project-kicker mb-0">Device Specifications</div>
                                 </div>
                                 <div class="row g-2">
@@ -77,7 +67,7 @@
             <div class="container">
                 <div class="section-head">
                     <div>
-                        <div class="pill"><i class="fa-solid fa-grid-2"></i> Featured</div>
+                        <div class="pill">Featured</div>
                         <h2 class="section-title mt-3">Project Archive</h2>
                         <p class="section-desc">
                             Two focus pieces showcasing my pipeline: a Blender-based solar system study and a rotoscoping workflow breakdown.
@@ -86,7 +76,6 @@
                     <div class="d-none d-md-block">
                         <a class="btn-glass" href="portfolio/index.html">
                             <span>Open full archive</span>
-                            <i class="fa-solid fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>
@@ -94,20 +83,34 @@
                 <div class="glass p-4 p-md-5" style="border-radius: var(--radius-xl);">
                     <div class="row g-3 align-items-center">
                         <div class="col-md-8">
-                            <div class="pill mb-3"><i class="fa-solid fa-compass"></i> Navigation</div>
-                            <div class="fw-black" style="font-weight: 900; font-size: 1.35rem; letter-spacing: -0.02em;">Open projects from the Portfolio menu</div>
+                            <div class="pill mb-3">Navigation</div>
+                            <div style="font-weight: 900; font-size: 1.35rem; letter-spacing: -0.02em;">
+                                Open projects from the Portfolio menu
+                            </div>
                             <p class="muted mb-0" style="max-width: 70ch;">
                                 I moved the individual project links into the <span class="mono">Portfolio</span> dropdown in the top navigation so the home page stays clean and minimal.
                             </p>
                         </div>
                         <div class="col-md-4 d-flex justify-content-md-end gap-2 flex-wrap">
                             <a class="btn-glass btn-accent" href="portfolio/solarsystem.html">
-                                <i class="fa-solid fa-cube"></i> <span>Blender</span>
+                                <span>Blender</span>
                             </a>
                             <a class="btn-glass" href="portfolio/rotoscope.html">
-                                <i class="fa-solid fa-film"></i> <span>Rotoscoping</span>
+                                <span>Rotoscoping</span>
                             </a>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Global Disclaimer Section -->
+        <section class="section pb-5 pt-0">
+            <div class="container">
+                <div class="glass p-4" style="border-radius: var(--radius-lg); background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <div class="muted" style="font-size: 0.85rem; line-height: 1.7;">
+                        <span class="fw-bold text-white mb-2 d-block" style="letter-spacing: 0.05em; font-size: 0.9rem;">DISCLAIMER</span>
+                        This website and all of its content are created and presented for educational purposes only. Any images, videos, audio, and other materials used are the property of their respective owners, and full credit is given where due. No copyright infringement is intended, and this work is not meant for commercial use or distribution.
                     </div>
                 </div>
             </div>
@@ -117,12 +120,28 @@
     <div id="footer"></div>
 
     <script>
-        fetch('./layouts/footer.html')
-            .then(r => r.text())
-            .then(html => { document.getElementById('footer').innerHTML = html; });
+        document.addEventListener("DOMContentLoaded", () => {
+            fetch('./layouts/header.html?v=' + Date.now())
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('header').innerHTML = html;
+                    const navLinks = document.querySelectorAll('.nav-link');
+                    navLinks.forEach(link => {
+                        if ((link.getAttribute('href') || '').includes('index.html')) {
+                            link.classList.add('active');
+                        }
+                    });
+                });
+
+            fetch('./layouts/footer.html')
+                .then(r => r.text())
+                .then(html => {
+                    document.getElementById('footer').innerHTML = html;
+                });
+        });
     </script>
 
-    <!-- Bootstrap JS Bundle with Popper -->
+    <!-- Bootstrap JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
 
