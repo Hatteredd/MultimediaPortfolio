@@ -45,16 +45,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const link = dropdown.querySelector('.nav-link');
         
         link.addEventListener('click', (e) => {
-            if (window.innerWidth > 768 && !dropdown.classList.contains('active')) {
+            if (window.innerWidth > 768 && !dropdown.classList.contains('open')) {
                 e.preventDefault();
                 e.stopPropagation();
                 
                 // Close other dropdowns
                 dropdowns.forEach(d => {
-                    if (d !== dropdown) d.classList.remove('active');
+                    if (d !== dropdown) d.classList.remove('open');
                 });
                 
-                dropdown.classList.add('active');
+                dropdown.classList.add('open');
+            }
+        });
+
+        // Remove open class on mouse leave to prevent stuck dropdowns on desktop
+        dropdown.addEventListener('mouseleave', () => {
+            if (window.innerWidth > 768) {
+                dropdown.classList.remove('open');
             }
         });
     });
@@ -62,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Close dropdowns when clicking outside
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.custom-dropdown')) {
-            dropdowns.forEach(d => d.classList.remove('active'));
+            dropdowns.forEach(d => d.classList.remove('open'));
         }
     });
 

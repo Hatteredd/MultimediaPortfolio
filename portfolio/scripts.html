@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Scripts - Rick Justine Pabalan</title>
+    <link rel="stylesheet" href="../assets/css/main.css">
+    <style>
+        .scripts-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 992px) {
+            .scripts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .script-sidebar {
+            position: sticky;
+            top: 100px;
+        }
+
+        .planet-nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            color: var(--text-1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+        }
+
+        .planet-nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+        .planet-nav-item.active {
+            background: var(--accent-grad);
+            color: #000;
+            font-weight: 700;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .script-content {
+            display: none;
+        }
+
+        .script-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .script-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .code-window {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .code-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-2);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        .action-btn:hover {
+            color: var(--accent-b);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .action-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .copy-feedback {
+            position: absolute;
+            top: -30px;
+            right: 0;
+            background: var(--accent-grad);
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+        .tag-pending {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-2);
+            border: 1px solid var(--glass-border);
+        }
+
+        .muted-2 { color: var(--text-2); }
+        .fs-xs { font-size: 0.75rem; }
+        .ls-neg-02 { letter-spacing: -0.02em; }
+        .mono { font-family: var(--font-mono); }
+
+        /* Dropdown Active State */
+        .active-dropdown-item {
+            background: rgba(240, 180, 41, 0.15) !important;
+            color: var(--accent-b) !important;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="glass-nav">
+        <div class="nav-container">
+            <a class="d-flex align-items-center gap-2" href="../index.html">
+                <span class="brand-mark">RP</span>
+                <span class="d-none d-sm-inline fw-bold">Multimedia Portfolio</span>
+            </a>
+
+            <button class="nav-toggler" id="menu-toggle" aria-label="Toggle navigation">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+
+            <div class="nav-menu" id="nav-menu">
+                <ul class="d-flex align-items-center gap-1 m-0 p-0 list-unstyled">
+                    <li><a class="nav-link" href="../index.html">Home</a></li>
+                    <li class="custom-dropdown">
+                        <a class="nav-link" href="index.html">
+                            Portfolio
+                            <svg class="ms-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </a>
+                        <div class="dropdown-content glass">
+                            <a class="nav-link" href="index.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" height="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                Project Archive
+                            </a>
+                            <div class="divider-light"></div>
+                            <a class="nav-link" href="solarsystem.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                Blender — Solar System
+                            </a>
+                            <a class="nav-link" href="rotoscope.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                                Rotoscoping — Workflow
+                            </a>
+                        </div>
+                    </li>
+                    <li class="custom-dropdown">
+                        <a class="nav-link" href="scripts.html">
+                            Scripts
+                            <svg class="ms-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </a>
+                        <div class="dropdown-content glass dropdown-scripts">
+                            <a class="nav-link" href="#sun">The Sun</a>
+                            <a class="nav-link" href="#mercury">Mercury</a>
+                            <a class="nav-link" href="#venus">Venus</a>
+                            <a class="nav-link" href="#earth">Earth</a>
+                            <a class="nav-link" href="#mars">Mars</a>
+                            <a class="nav-link" href="#jupiter">Jupiter</a>
+                            <a class="nav-link" href="#saturn">Saturn</a>
+                            <a class="nav-link" href="#uranus">Uranus</a>
+                            <a class="nav-link" href="#neptune">Neptune</a>
+                            <a class="nav-link" href="#pluto">Pluto</a>
+                        </div>
+                    </li>
+                    <li><a class="nav-link" href="../about.html">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="section">
+        <div class="container pt-5">
+            <div class="section-head">
+                <div class="pill">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    Automation
+                </div>
+                <h1 class="section-title mt-3">Project Scripts</h1>
+                <p class="section-desc">Technical implementations and Python automation scripts used for planetary calculations and Blender scene generation.</p>
+            </div>
+
+            <div class="scripts-container">
+                <!-- Sidebar Navigation -->
+                <aside class="script-sidebar glass p-3">
+                    <div class="muted-2 fs-xs mono mb-3 px-2">SELECT PLANET</div>
+                    <a href="#sun" class="planet-nav-item active">The Sun</a>
+                    <a href="#mercury" class="planet-nav-item">Mercury</a>
+                    <a href="#venus" class="planet-nav-item">Venus</a>
+                    <a href="#earth" class="planet-nav-item">Earth</a>
+                    <a href="#mars" class="planet-nav-item">Mars</a>
+                    <a href="#jupiter" class="planet-nav-item">Jupiter</a>
+                    <a href="#saturn" class="planet-nav-item">Saturn</a>
+                    <a href="#uranus" class="planet-nav-item">Uranus</a>
+                    <a href="#neptune" class="planet-nav-item">Neptune</a>
+                    <a href="#pluto" class="planet-nav-item">Pluto</a>
+                </aside>
+
+                <!-- Script Content Area -->
+                <div class="script-main glass p-4">
+                    
+                    <!-- Sun Script -->
+                    <div id="sun" class="script-content active">
+                        <div class="script-header">
+                            <h3 class="m-0">The Sun Automation</h3>
+                            <span class="tag">PYTHON 3.10+</span>
+                        </div>
+                        <p class="muted fs-09">Automates the procedural rotation and tilt for the solar surface, corona, and prominence layers.</p>
+                        <div class="code-window">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">sun_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'sun_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+
+# --- Settings --- 
+TOTAL_FRAMES = 500 
+FPS = 24 
+
+# Keywords to find all sun-related layers
+KEYWORDS = ["The Sun", "Solar", "Corona", "Prominence", "Star_Surface"] 
+
+scene = bpy.context.scene 
+scene.frame_start = 1 
+scene.frame_end = TOTAL_FRAMES 
+scene.render.fps = FPS 
+
+updated_count = 0 
+
+for obj in bpy.data.objects: 
+    if any(key.lower() in obj.name.lower() for key in KEYWORDS): 
+        obj.animation_data_clear() 
+        obj.rotation_mode = 'XYZ' 
+        obj.rotation_euler.x = math.radians(7.25) 
+        obj.rotation_euler.z = 0 
+        obj.keyframe_insert(data_path="rotation_euler", index=2, frame=1) 
+        obj.rotation_euler.z = math.radians(360) 
+        obj.keyframe_insert(data_path="rotation_euler", index=2, frame=TOTAL_FRAMES + 1) 
+
+        if obj.animation_data and obj.animation_data.action: 
+            action = obj.animation_data.action 
+            for layer in action.layers: 
+                for strip in layer.strips: 
+                    for channelbag in strip.channelbags: 
+                        for fcurve in channelbag.fcurves: 
+                            for kp in fcurve.keyframe_points: 
+                                kp.interpolation = 'LINEAR' 
+        updated_count += 1 
+
+if updated_count == 0: 
+    print("❌ No sun-related objects found.") 
+else: 
+    scene.frame_set(1) 
+    print(f"✅ Success! Animated {updated_count} sun parts.")</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mercury Script -->
+                    <div id="mercury" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Mercury Automation</h3>
+                            <span class="tag">PYTHON 3.10+</span>
+                        </div>
+                        <p class="muted fs-09">Implements realistic sidereal day rotation and axial tilt for Mercury based on orbital physics.</p>
+                        <div class="code-window">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">mercury_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'mercury_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+
+# --- USER SETTINGS --- 
+MERCURY_OBJECT_NAME  = "Mercury" 
+CAMERA_DISTANCE      = 6.0 
+EARTH_DAYS_PER_FRAME = 0.244 
+SIDEREAL_DAY_EARTH_DAYS = 58.646 
+AXIAL_TILT_DEG          = 0.034 
+
+def center_camera_on_mercury(): 
+    camera = bpy.data.objects.get("Camera") 
+    if not camera: return 
+    camera.location = (0.0, -CAMERA_DISTANCE, 0.0) 
+    camera.rotation_euler = (1.5707963, 0.0, 0.0) 
+
+def center_and_spin_mercury(): 
+    fps              = bpy.context.scene.render.fps 
+    total_frames     = fps * 10 
+    mercury = bpy.data.objects.get(MERCURY_OBJECT_NAME) 
+    if not mercury: return 
+
+    mercury.location = (0.0, 0.0, 0.0) 
+    mercury.animation_data_clear() 
+
+    for frame in range(1, total_frames + 1): 
+        bpy.context.scene.frame_set(frame) 
+        earth_days = (frame - 1) * EARTH_DAYS_PER_FRAME 
+        spin_angle = (earth_days / SIDEREAL_DAY_EARTH_DAYS) * 2 * math.pi 
+        mercury.rotation_euler = (math.radians(AXIAL_TILT_DEG), 0.0, spin_angle) 
+        mercury.keyframe_insert(data_path="location", frame=frame) 
+        mercury.keyframe_insert(data_path="rotation_euler", frame=frame) 
+
+    # Linear Interpolation
+    if mercury.animation_data and mercury.animation_data.action: 
+        action = mercury.animation_data.action 
+        for fcurve in action.fcurves: 
+            for kp in fcurve.keyframe_points: 
+                kp.interpolation = 'LINEAR' 
+
+center_camera_on_mercury() 
+center_and_spin_mercury()</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Venus Script -->
+                    <div id="venus" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Venus Automation</h3>
+                            <span class="tag">PYTHON 3.10+</span>
+                        </div>
+                        <p class="muted fs-09">Handles the retrograde rotation and atmospheric layer movement for the Venusian environment.</p>
+                        <div class="code-window">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">venus_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'venus_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+
+# --- Venus Settings --- 
+VENUS_BODY = "Venus" 
+VENUS_CLOUDS = "Venus_Atmosphere" 
+SIDEREAL_DAY = 243.022  # Earth days (Retrograde) 
+AXIAL_TILT = 177.36     # Degrees 
+
+def apply_venus_rotation(): 
+    scene = bpy.context.scene 
+    fps = scene.render.fps 
+    total_frames = scene.frame_end 
+    
+    venus = bpy.data.objects.get(VENUS_BODY) 
+    clouds = bpy.data.objects.get(VENUS_CLOUDS) 
+    
+    if not venus: return 
+
+    venus.animation_data_clear() 
+    venus.rotation_mode = 'XYZ' 
+    
+    for frame in range(scene.frame_start, total_frames + 1): 
+        scene.frame_set(frame) 
+        # Negative sign for retrograde rotation
+        spin = -((frame / fps) / (SIDEREAL_DAY * 86400)) * 2 * math.pi 
+        venus.rotation_euler = (math.radians(AXIAL_TILT), 0, spin) 
+        venus.keyframe_insert(data_path="rotation_euler", frame=frame) 
+        
+        if clouds: 
+            # Clouds rotate slightly faster than the surface
+            cloud_spin = spin * 1.2  
+            clouds.rotation_euler = (math.radians(AXIAL_TILT), 0, cloud_spin) 
+            clouds.keyframe_insert(data_path="rotation_euler", frame=frame) 
+
+apply_venus_rotation()</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Earth Script -->
+                    <div id="earth" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Earth Automation</h3>
+                            <span class="tag">PYTHON 3.10+</span>
+                        </div>
+                        <p class="muted fs-09">Synchronizes cloud layer rotation with surface rotation and manages moon orbital constraints.</p>
+                        <div class="code-window">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">earth_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'earth_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+
+# --- Earth System Settings --- 
+EARTH = "Earth" 
+CLOUDS = "Earth_Clouds" 
+MOON = "Moon" 
+TILT = 23.44 
+DAY_LENGTH = 0.9972  # Sidereal day in Earth days 
+
+def setup_earth_system(): 
+    scene = bpy.context.scene 
+    obj = bpy.data.objects.get(EARTH) 
+    cloud_obj = bpy.data.objects.get(CLOUDS) 
+    
+    if not obj: return 
+
+    # Surface Rotation 
+    obj.rotation_mode = 'XYZ' 
+    obj.rotation_euler.x = math.radians(TILT) 
+    
+    # Add driver for constant rotation 
+    driver = obj.driver_add("rotation_euler", 2).driver 
+    driver.type = 'SCRIPTED' 
+    # Rotation formula: (2*pi / (seconds_in_day)) * time 
+    driver.expression = f"(2 * pi / ({DAY_LENGTH} * 86400)) * frame / {scene.render.fps}" 
+    
+    if cloud_obj: 
+        cloud_obj.rotation_mode = 'XYZ' 
+        cloud_obj.rotation_euler.x = math.radians(TILT) 
+        c_driver = cloud_obj.driver_add("rotation_euler", 2).driver 
+        c_driver.type = 'SCRIPTED' 
+        # Clouds rotate 10% faster for dynamic effect 
+        c_driver.expression = f"(2 * pi / ({DAY_LENGTH} * 86400)) * 1.1 * frame / {scene.render.fps}" 
+
+setup_earth_system()</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mars Script -->
+                    <div id="mars" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Mars Automation</h3>
+                            <span class="tag tag-pending">PENDING</span>
+                        </div>
+                        <p class="muted fs-09">Simulates Martian rotation and provides setup for dust storm particle systems.</p>
+                        <div class="code-window opacity-50">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <span class="muted-2 fs-xs mono">mars_automation.py</span>
+                            </div>
+                            <div class="p-5 text-center">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="10"></circle><path d="M18 12c-4.42 0-8-3.58-8-8"></path></svg>
+                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Jupiter Script -->
+                    <div id="jupiter" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Jupiter Automation</h3>
+                            <span class="tag tag-pending">PENDING</span>
+                        </div>
+                        <p class="muted fs-09">Manages complex differential rotation for the Great Red Spot and Jovian bands.</p>
+                        <div class="code-window opacity-50">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <span class="muted-2 fs-xs mono">jupiter_automation.py</span>
+                            </div>
+                            <div class="p-5 text-center">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2v20"></path></svg>
+                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Saturn Script -->
+                    <div id="saturn" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Saturn Automation</h3>
+                            <span class="tag tag-pending">PENDING</span>
+                        </div>
+                        <p class="muted fs-09">Controls ring rotation speeds and tilt synchronization with the planetary body.</p>
+                        <div class="code-window opacity-50">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <span class="muted-2 fs-xs mono">saturn_automation.py</span>
+                            </div>
+                            <div class="p-5 text-center">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="5"></circle><ellipse cx="12" cy="12" rx="10" ry="3"></ellipse></svg>
+                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Uranus Script -->
+                    <div id="uranus" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Uranus Automation</h3>
+                            <span class="tag tag-pending">PENDING</span>
+                        </div>
+                        <p class="muted fs-09">Calculates the unique 98-degree axial tilt rotation for the Uranian system.</p>
+                        <div class="code-window opacity-50">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <span class="muted-2 fs-xs mono">uranus_automation.py</span>
+                            </div>
+                            <div class="p-5 text-center">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20"></path></svg>
+                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Neptune Script -->
+                    <div id="neptune" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Neptune Automation</h3>
+                            <span class="tag tag-pending">PENDING</span>
+                        </div>
+                        <p class="muted fs-09">Automates high-speed wind simulation and dark spot movement patterns.</p>
+                        <div class="code-window opacity-50">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <span class="muted-2 fs-xs mono">neptune_automation.py</span>
+                            </div>
+                            <div class="p-5 text-center">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="10"></circle><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pluto Script -->
+                    <div id="pluto" class="script-content">
+                        <div class="script-header">
+                            <h3 class="m-0">Pluto Automation</h3>
+                            <span class="tag tag-pending">PENDING</span>
+                        </div>
+                        <p class="muted fs-09">Handles the binary orbital rotation with Charon and eccentric axial movement.</p>
+                        <div class="code-window opacity-50">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <span class="muted-2 fs-xs mono">pluto_automation.py</span>
+                            </div>
+                            <div class="p-5 text-center">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="5"></circle><path d="M12 12l4 4"></path></svg>
+                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="container">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="brand-mark footer-brand-mark">RP</span>
+                    <div>
+                        <div class="fw-bold">Rick Justine Pabalan</div>
+                        <div class="muted-2 mono fs-xs ls-012">MULTIMEDIA & AUTHORING</div>
+                    </div>
+                </div>
+
+                <div class="text-md-end">
+                    <div class="muted fs-095">&copy; 2026 | BSIT-S-2A</div>
+                    <div class="muted-2 fs-085">[ FOR EDUCATIONAL PURPOSES ONLY ]</div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/js/main.js"></script>
+    <script>
+        function showScript(planetId) {
+            if (!planetId) return;
+            
+            // Update sidebar nav items
+            document.querySelectorAll('.planet-nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === '#' + planetId) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update top dropdown items
+            document.querySelectorAll('.dropdown-scripts .nav-link').forEach(item => {
+                item.classList.remove('active-dropdown-item');
+                if (item.getAttribute('href') === '#' + planetId || item.getAttribute('href').endsWith('#' + planetId)) {
+                    item.classList.add('active-dropdown-item');
+                }
+            });
+
+            // Update content
+            document.querySelectorAll('.script-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            const target = document.getElementById(planetId);
+            if (target) {
+                target.classList.add('active');
+                // Scroll to top of content area on mobile
+                if (window.innerWidth <= 992) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+
+        // Handle hash on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.replace('#', '') || 'sun';
+            showScript(hash);
+        });
+
+        // Handle hash change
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#', '') || 'sun';
+            showScript(hash);
+        });
+
+        // Copy and Download Functionality
+        function copyCode(btn) {
+            const codeWindow = btn.closest('.code-window');
+            const code = codeWindow.querySelector('code').innerText;
+            const feedback = btn.parentElement.querySelector('.copy-feedback');
+
+            navigator.clipboard.writeText(code).then(() => {
+                feedback.classList.add('show');
+                setTimeout(() => {
+                    feedback.classList.remove('show');
+                }, 2000);
+            });
+        }
+
+        function downloadCode(btn, filename) {
+            const codeWindow = btn.closest('.code-window');
+            const code = codeWindow.querySelector('code').innerText;
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+
+</html>

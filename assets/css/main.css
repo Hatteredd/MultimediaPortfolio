@@ -261,9 +261,26 @@ a { text-decoration: none; color: inherit; }
 }
 
 .custom-dropdown:hover .dropdown-content,
-.custom-dropdown.active .dropdown-content {
+.custom-dropdown.open .dropdown-content {
   display: block;
   transform: translateY(0);
+}
+
+.dropdown-scripts {
+  min-width: 200px;
+}
+
+@media (min-width: 769px) {
+  .dropdown-scripts {
+    min-width: 320px;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25rem;
+  }
+  
+  .custom-dropdown:hover .dropdown-scripts,
+  .custom-dropdown.open .dropdown-scripts {
+    display: grid !important;
+  }
 }
 
 /* Invisible bridge to maintain hover */
