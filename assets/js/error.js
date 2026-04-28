@@ -1,3 +1,4 @@
+/* jshint esversion: 6 */
 document.addEventListener('DOMContentLoaded', () => {
     let seconds = 5;
     const timerDisplay = document.getElementById('timer');

@@ -1,3 +1,4 @@
+/* jshint esversion: 6 */
 document.addEventListener('DOMContentLoaded', () => {
     // Mobile Menu Toggle
     const menuToggle = document.getElementById('menu-toggle');
@@ -25,16 +26,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const href = link.getAttribute('href');
             if (!href) return;
 
-            // Simple check for active page
-            // Handles cases like 'index.html', 'about.html', and subfolder links
-            const isHome = (currentPath.endsWith('/') || currentPath.endsWith('index.html')) && (href.endsWith('index.html') || href === 'index.html');
+            const isHomePath = currentPath.endsWith('/') || currentPath.endsWith('index.html');
+            const isHomeHref = href.endsWith('index.html') || href === 'index.html';
+            
+            const isHome = isHomePath && isHomeHref;
             const isMatch = currentPath.includes(href) && href !== 'index.html';
             
-            if (isHome || isMatch) {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
-            }
+            link.classList.toggle('active', isHome || isMatch);
         });
     };
 
@@ -47,20 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const link = dropdown.querySelector('.nav-link');
         
         link.addEventListener('click', (e) => {
-            // On desktop, if it's not a touch device, we might still want hover
-            // But let's handle click to toggle for better accessibility
-            if (window.innerWidth > 768) {
-                if (!dropdown.classList.contains('active')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    // Close other dropdowns
-                    dropdowns.forEach(d => {
-                        if (d !== dropdown) d.classList.remove('active');
-                    });
-                    
-                    dropdown.classList.add('active');
-                }
+            if (window.innerWidth > 768 && !dropdown.classList.contains('active')) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close other dropdowns
+                dropdowns.forEach(d => {
+                    if (d !== dropdown) d.classList.remove('active');
+                });
+                
+                dropdown.classList.add('active');
             }
         });
     });
