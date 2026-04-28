@@ -272,14 +272,14 @@ function updateOrbitalData() {
     const visual = document.getElementById('planetVisual');
     if (visual) {
         visual.style.background = 'none';
-        if (planet.video) {
+        if (planet.video && planet.video !== "") {
             const timestamp = Date.now();
             visual.innerHTML = `
                 <video autoplay loop muted playsinline poster="${planet.icon || ''}">
                     <source src="${planet.video}?v=${timestamp}" type="video/mp4">
                 </video>
             `;
-        } else if (planet.icon) {
+        } else if (planet.icon && planet.icon !== "") {
             visual.innerHTML = `<img src="${planet.icon}" alt="${planet.name}" onerror="this.parentElement.innerHTML='<div class=\'visual-placeholder\' style=\'background:${planet.color}\'></div>'">`;
         } else {
             visual.innerHTML = `<div class="visual-placeholder" style="background: ${planet.color}"></div>`;
