@@ -75,7 +75,8 @@ const planetaryData = [
         distance: "227.9M km",
         description: "Mars is known as the Red Planet because of iron oxide (rust) covering its surface. It is a cold desert world with the largest volcano in the solar system and deep canyons. Evidence suggests it once had rivers and lakes, making it a strong candidate for past microbial life.",
         color: "#c1440e",
-        icon: "",
+        icon: "../images/Mars.webp",
+        video: "./videos/Mars.mp4",
         ratio: 1.8808158,
         sizeLabel: "53%",
         sizePercent: 53
