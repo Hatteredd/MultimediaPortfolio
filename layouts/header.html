@@ -1,43 +1,41 @@
-<nav class="navbar navbar-expand-lg glass-nav">
-  <div class="container py-2">
+<nav class="glass-nav">
+  <div class="container nav-container">
     <a class="navbar-brand d-flex align-items-center gap-2 text-decoration-none" href="index.html">
       <span class="brand-mark">RP</span>
-      <span class="d-none d-sm-inline fw-bold" style="letter-spacing:-0.02em;">Multimedia Portfolio</span>
+      <span class="d-none d-sm-inline fw-bold ls-neg-02">Multimedia Portfolio</span>
     </a>
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+    <button class="nav-toggler" id="menu-toggle" aria-label="Toggle navigation">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1 py-2 py-lg-0">
-        <li class="nav-item">
+    <div class="nav-menu" id="nav-menu">
+      <ul class="d-flex align-items-center gap-1 m-0 p-0 list-unstyled">
+        <li>
           <a class="nav-link" href="index.html"><span>Home</span></a>
         </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="portfolio/index.html" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <li class="position-relative custom-dropdown">
+          <a class="nav-link d-flex align-items-center gap-1" href="portfolio/index.html">
             <span>Portfolio</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </a>
-          <ul class="dropdown-menu dropdown-menu-end glass" style="padding: 0.6rem; min-width: 280px;">
-            <li>
-              <a class="dropdown-item nav-link" href="portfolio/index.html" style="padding: 0.7rem 0.9rem !important; border-radius: 12px;">
-                <i class="fa-solid fa-layer-group me-2"></i> Project Archive
-              </a>
-            </li>
-            <li><hr class="dropdown-divider" style="border-color: rgba(255,255,255,0.12);" /></li>
-            <li>
-              <a class="dropdown-item nav-link" href="portfolio/solarsystem.html" style="padding: 0.7rem 0.9rem !important; border-radius: 12px;">
-                <i class="fa-solid fa-cube me-2"></i> Blender — Solar System
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item nav-link" href="portfolio/rotoscope.html" style="padding: 0.7rem 0.9rem !important; border-radius: 12px;">
-                <i class="fa-solid fa-film me-2"></i> Rotoscoping — Workflow
-              </a>
-            </li>
-          </ul>
+          <div class="dropdown-content glass">
+            <a class="nav-link" href="portfolio/index.html">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              Project Archive
+            </a>
+            <div class="divider-light"></div>
+            <a class="nav-link" href="portfolio/solarsystem.html">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+              Blender — Solar System
+            </a>
+            <a class="nav-link" href="portfolio/rotoscope.html">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+              Rotoscoping — Workflow
+            </a>
+          </div>
         </li>
-        <li class="nav-item">
+        <li>
           <a class="nav-link" href="about.html"><span>About</span></a>
         </li>
       </ul>

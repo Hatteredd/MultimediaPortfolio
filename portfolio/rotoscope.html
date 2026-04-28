@@ -5,245 +5,421 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rotoscoping | Rick Justine Pabalan</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../layouts/theme.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 
 <body>
 
-    <div id="header"></div>
+    <nav class="glass-nav">
+        <div class="nav-container">
+            <a class="d-flex align-items-center gap-2" href="../index.html">
+                <span class="brand-mark">RP</span>
+                <span class="d-none d-sm-inline fw-bold">Multimedia Portfolio</span>
+            </a>
 
-    <script>
-        fetch('../layouts/header.html?v=' + Date.now())
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('header').innerHTML = data;
-                // Fix relative paths in header when in subfolder
-                const links = document.querySelectorAll('a');
-                links.forEach(link => {
-                    const href = link.getAttribute('href');
-                    if (!href) return;
+            <button class="nav-toggler" id="menu-toggle" aria-label="Toggle navigation">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
 
-                    if (href === 'index.html') link.href = "../index.html";
-                    if (href === 'about.html') link.href = "../about.html";
+            <div class="nav-menu" id="nav-menu">
+                <ul class="d-flex align-items-center gap-1 m-0 p-0 list-unstyled">
+                    <li><a class="nav-link" href="../index.html">Home</a></li>
+                    <li class="custom-dropdown">
+                        <a class="nav-link" href="index.html">
+                            Portfolio
+                            <svg class="ms-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </a>
+                        <div class="dropdown-content glass">
+                            <a class="nav-link" href="index.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                Project Archive
+                            </a>
+                            <div class="divider-light"></div>
+                            <a class="nav-link" href="solarsystem.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                Blender — Solar System
+                            </a>
+                            <a class="nav-link" href="rotoscope.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                                Rotoscoping — Workflow
+                            </a>
+                        </div>
+                    </li>
+                    <li><a class="nav-link" href="../about.html">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-                    if (href === 'portfolio/index.html') link.href = "index.html";
-                    if (href === 'portfolio/solarsystem.html') link.href = "solarsystem.html";
-                    if (href === 'portfolio/rotoscope.html') link.href = "rotoscope.html";
-                });
+    <main>
+        <section class="tutorial-section pt-5">
+            <div class="container">
+                <div class="text-center mb-5 fade-in">
+                    <p class="card-category">POST-PRODUCTION</p>
+                    <h2 class="section-title">ROTOSCOPING</h2>
+                    <p class="hero-description mx-auto">Advanced frame-by-frame analysis and subject extraction. 
+                        This project demonstrates surgical precision in rotoscoping to isolate organic motion 
+                        from complex environments.</p>
+                    <div class="mt-4 tech-tags justify-content-center">
+                        <span class="tech-tag">AFTER EFFECTS</span>
+                        <span class="tech-tag">CAPCUT</span>
+                    </div>
+                </div>
+            </div>
 
-                // Mark Portfolio as active when inside /portfolio
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    const href = link.getAttribute('href') || '';
-                    if (href.includes('rotoscope.html') || href.includes('index.html')) link.classList.add('active');
-                });
-            });
-    </script>
+            <div class="container">
+                <!-- Final Output Placeholder -->
+                <div class="fade-in mb-5">
+                    <h2 class="section-title text-center mb-4">FINAL OUTPUT</h2>
+                    <div class="placeholder-box glass-panel mx-auto d-flex align-items-center justify-content-center">
+                        <div class="text-center">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-30"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                            <p class="muted mb-0 fw-bold text-uppercase ls-1">Final Rotoscope Video Pending</p>
+                        </div>
+                    </div>
+                </div>
 
-    <section class="tutorial-section pt-5">
+                <!-- Reference Video Section -->
+                <div class="fade-in mb-5">
+                    <h2 class="section-title text-center mb-4">REFERENCE VIDEO</h2>
+                    <div class="video-wrapper-lg glass-panel mx-auto">
+                        <iframe src="https://www.youtube.com/embed/i9PFkQp3WSo"
+                            title="Reference Video" frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerpolicy="strict-origin-when-cross-origin" allowfullscreen
+                            class="abs-full">
+                        </iframe>
+                    </div>
+                    <p class="text-center mt-3 muted fw-semibold ls-1">DISCLAIMER: This material is used for academic purposes only. All rights and credits belong to the original owner(s).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step-by-Step Tutorial Section -->
+        <section class="tutorial-section py-5">
+            <div class="container">
+                <h2 class="section-title">TUTORIAL</h2>
+
+                <div class="row">
+                    <!-- Step 1 - Video Link Integrated -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="portfolio-card h-100 fade-in">
+                            <div class="video-wrapper-sm mb-3">
+                                <iframe src="https://www.youtube.com/embed/i9PFkQp3WSo?rel=0&showinfo=0&modestbranding=1"
+                                    title="Reference Step 01" frameborder="0"
+                                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowfullscreen
+                                    class="abs-full">
+                                </iframe>
+                            </div>
+                            <div class="card-content">
+                                <p class="card-category">STEP 01</p>
+                                <h5 class="card-title">REFERENCE</h5>
+                                <p class="card-description">Find any reference video of your choice</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="portfolio-card h-100 fade-in">
+                            <div class="video-wrapper-sm mb-3">
+                                <img src="../images/step2.png" alt="Step 2 - Cutting by 5 second clips" class="img-fluid rounded abs-full object-fit-cover">
+                            </div>
+                            <div class="card-content">
+                                <p class="card-category">STEP 02</p>
+                                <h5 class="card-title">Cutting by 5 second clips</h5>
+                                <p class="card-description">Use Capcut and divide your clip into 5 seconds for smooth editing</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="portfolio-card h-100 fade-in">
+                            <div class="video-wrapper-sm mb-3">
+                                <img src="../images/step3.png" alt="Step 3 - Composition" class="img-fluid rounded abs-full object-fit-cover">
+                            </div>
+                            <div class="card-content">
+                                <p class="card-category">STEP 03</p>
+                                <h5 class="card-title">Composition</h5>
+                                <p class="card-description">Using Adobe After Effects, import your video and create a composition</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="portfolio-card h-100 fade-in">
+                            <div class="video-wrapper-sm mb-3">
+                                <img src="../images/step4.png" alt="Step 4 - Layer Duplication" class="img-fluid rounded abs-full object-fit-cover">
+                            </div>
+                            <div class="card-content">
+                                <p class="card-category">STEP 04</p>
+                                <h5 class="card-title">Layer Duplication</h5>
+                                <p class="card-description">Duplicate your main layer depending on how many body parts you want to include in your animation</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="portfolio-card h-100 fade-in">
+                            <div class="video-wrapper-sm mb-3">
+                                <img src="../images/step5.png" alt="Step 5 - Tracing Body Parts" class="img-fluid rounded abs-full object-fit-cover">
+                            </div>
+                            <div class="card-content">
+                                <p class="card-category">STEP 05</p>
+                                <h5 class="card-title">Tracing Body Parts</h5>
+                                <p class="card-description">Trace each body part per layer using your rotobrush on Adobe After Effects and add Fill colors to each bodypart</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 6 -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="portfolio-card h-100 fade-in">
+                            <div class="video-wrapper-sm mb-3">
+                                <img src="../images/step6.png" alt="Step 6 - Rendering" class="img-fluid rounded abs-full object-fit-cover">
+                            </div>
+                            <div class="card-content">
+                                <p class="card-category">STEP 06</p>
+                                <h5 class="card-title">Rendering</h5>
+                                <p class="card-description">Render your 5 second clip and wait until it is finished</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools Used Section -->
+        <section class="section py-5">
+            <div class="container">
+                <h2 class="section-title text-center mb-5">TOOLS USED</h2>
+                <div class="tools-grid">
+                    <!-- After Effects -->
+                    <div class="tool-item">
+                        <div class="glass tool-card lift fade-in">
+                            <div class="tool-logo-wrapper">
+                                <img src="../images/AE.png" alt="Adobe After Effects" class="tool-logo">
+                            </div>
+                            <h3 class="tool-name">Adobe After Effects</h3>
+                            <p class="tool-desc">
+                                Used for advanced frame-by-frame masking and motion tracking to achieve surgical precision in rotoscoping.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Capcut -->
+                    <div class="tool-item">
+                        <div class="glass tool-card lift fade-in">
+                            <div class="tool-logo-wrapper">
+                                <img src="../images/Capcut.webp" alt="Capcut" class="tool-logo">
+                            </div>
+                            <h3 class="tool-name">Capcut</h3>
+                            <p class="tool-desc">
+                                Employed for initial video cutting and final assembly of the rotoscoped segments into a fluid sequence.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weekly Progress Section -->
+        <section class="py-5">
+            <div class="container">
+                <h2 class="section-title text-center mb-5">Weekly Progress</h2>
+
+                <div class="row g-4 justify-content-center">
+                    <!-- Week 1 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <iframe src="https://www.youtube.com/embed/b0HWwyPZ8Q8"
+                                    title="Week 1 Progress"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 1 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 2 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <iframe src="https://www.youtube.com/embed/oM6E4EqVc8M"
+                                    title="Week 2 Progress"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 2 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 3 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <iframe src="https://www.youtube.com/embed/c7TaNqr4CZY"
+                                    title="Week 3 Progress"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                                </iframe>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 3 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 4 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 4 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 5 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 5 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 6 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 6 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 7 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 7 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 8 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 8 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 9 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 9 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 10 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 10 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 11 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 11 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Week 12 -->
+                    <div class="col-lg-3 col-md-4 col-sm-6">
+                        <div class="portfolio-card h-100 fade-in card-compact">
+                            <div class="video-container ratio ratio-16x9 mb-0 card-video-top">
+                                <div class="visual-placeholder" style="background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; height: 100%;">
+                                    <span class="muted fs-xs">Video Pending</span>
+                                </div>
+                            </div>
+                            <div class="card-content text-center py-2">
+                                <p class="mb-0 card-category text-accent fs-xs-2">WEEK 12 PROGRESS</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="glass-footer">
         <div class="container">
-            <div class="text-center mb-5 fade-in">
-                <p class="card-category">POST-PRODUCTION</p>
-                <h2 class="section-title">ROTOSCOPING</h2>
-                <p class="hero-description mx-auto">Advanced frame-by-frame analysis and subject extraction. 
-                    This project demonstrates surgical precision in rotoscoping to isolate organic motion 
-                    from complex environments.</p>
-                <div class="mt-4 tech-tags justify-content-center">
-                    <span class="tech-tag">AFTER EFFECTS</span>
-                    <span class="tech-tag">CAPCUT</span>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="brand-mark footer-brand-mark">RP</span>
+                    <div>
+                        <div class="fw-bold">Rick Justine Pabalan</div>
+                        <div class="muted-2 mono fs-xs ls-2">MULTIMEDIA & AUTHORING</div>
+                    </div>
+                </div>
+
+                <div class="text-md-end">
+                    <div class="muted fs-md">&copy; 2026 | BSIT-S-2A</div>
+                    <div class="muted-2 fs-sm">[ FOR EDUCATIONAL PURPOSES ONLY ]</div>
                 </div>
             </div>
         </div>
+    </footer>
 
-        <div class="container">
-            <!-- Final Output Placeholder -->
-            <div class="fade-in mb-5">
-                <h2 class="section-title text-center mb-4">FINAL OUTPUT</h2>
-                <div class="placeholder-box ratio ratio-16x9 glass-panel mx-auto d-flex align-items-center justify-content-center" style="max-width: 900px; border-radius: var(--radius-xl); background: rgba(255, 255, 255, 0.03); border: 2px dashed rgba(255, 255, 255, 0.1);">
-                    <div class="text-center">
-                        <i class="fas fa-film mb-3" style="font-size: 4rem; opacity: 0.3;"></i>
-                        <p class="muted mb-0" style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Final Rotoscope Video Pending</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Reference Video Section -->
-            <div class="fade-in mb-5">
-                <h2 class="section-title text-center mb-4">REFERENCE VIDEO</h2>
-                <div class="video-container ratio ratio-16x9 glass-panel mx-auto" style="max-width: 900px; border-radius: var(--radius-xl); overflow: hidden;">
-                    <iframe src="https://www.youtube.com/embed/i9PFkQp3WSo"
-                        title="Reference Video" frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
-                    </iframe>
-                </div>
-                <p class="text-center mt-3 muted" style="font-weight: 600; letter-spacing: 0.05em;">DISCLAIMER: This material is used for academic purposes only. All rights and credits belong to the original owner(s).</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Step-by-Step Tutorial Section -->
-    <section class="tutorial-section py-5">
-        <div class="container">
-            <h2 class="section-title">TUTORIAL</h2>
-
-            <div class="row g-4">
-                <!-- Step 1 - Video Link Integrated -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-3">
-                            <iframe src="https://www.youtube.com/embed/i9PFkQp3WSo?rel=0&showinfo=0&modestbranding=1"
-                                title="Reference Step 01" frameborder="0"
-                                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowfullscreen>
-                            </iframe>
-                        </div>
-                        <div class="card-content">
-                            <p class="card-category">STEP 01</p>
-                            <h5 class="card-title">REFERENCE</h5>
-                            <p class="card-description">Find any reference video of your choice</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-3">
-                            <img src="../images/step2.png" alt="Step 2 - Cutting by 5 second clips" class="img-fluid rounded" style="object-fit: cover; height: 180px; width: 100%;">
-                        </div>
-                        <div class="card-content">
-                            <p class="card-category">STEP 02</p>
-                            <h5 class="card-title">Cutting by 5 second clips</h5>
-                            <p class="card-description">Use Capcut and divide your clip into 5 seconds for smooth editing</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-3">
-                            <img src="../images/step3.png" alt="Step 3 - Composition" class="img-fluid rounded" style="object-fit: cover; height: 180px; width: 100%;">
-                        </div>
-                        <div class="card-content">
-                            <p class="card-category">STEP 03</p>
-                            <h5 class="card-title">Composition</h5>
-                            <p class="card-description">Using Adobe After Effects, import your video and create a composition</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 4 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-3">
-                            <img src="../images/step4.png" alt="Step 4 - Layer Duplication" class="img-fluid rounded" style="object-fit: cover; height: 180px; width: 100%;">
-                        </div>
-                        <div class="card-content">
-                            <p class="card-category">STEP 04</p>
-                            <h5 class="card-title">Layer Duplication</h5>
-                            <p class="card-description">Duplicate your main layer depending on how many body parts you want to include in your animation</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 5 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-3">
-                            <img src="../images/step5.png" alt="Step 5 - Tracing Body Parts" class="img-fluid rounded" style="object-fit: cover; height: 180px; width: 100%;">
-                        </div>
-                        <div class="card-content">
-                            <p class="card-category">STEP 05</p>
-                            <h5 class="card-title">Tracing Body Parts</h5>
-                            <p class="card-description">Trace each body part per layer using your rotobrush on Adobe After Effects and add Fill colors to each bodypart</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 6 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-3">
-                            <img src="../images/step6.png" alt="Step 6 - Rendering" class="img-fluid rounded" style="object-fit: cover; height: 180px; width: 100%;">
-                        </div>
-                        <div class="card-content">
-                            <p class="card-category">STEP 06</p>
-                            <h5 class="card-title">Rendering</h5>
-                            <p class="card-description">Render your 5 second clip and wait until it is finished</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Weekly Progress Section -->
-    <section class="tutorial-section py-5">
-        <div class="container">
-            <h2 class="section-title">Weekly Progress</h2>
-
-            <div class="row g-4">
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-0" style="border-color: var(--glass-border); border-radius: 28px 28px 0 0;">
-                            <iframe src="https://www.youtube.com/embed/b0HWwyPZ8Q8"
-                                title="Progress 1" frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
-                            </iframe>
-                        </div>
-                        <div class="card-content text-center">
-                            <p class="mb-0 card-category" style="color: var(--accent-color);">Progress 1</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-0" style="border-color: var(--glass-border); border-radius: 28px 28px 0 0;">
-                            <iframe src="https://www.youtube.com/embed/oM6E4EqVc8M"
-                                title="Progress 2" frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
-                            </iframe>
-                        </div>
-                        <div class="card-content text-center">
-                            <p class="mb-0 card-category" style="color: var(--accent-color);">Progress 2</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
-                    <div class="portfolio-card h-100 fade-in">
-                        <div class="video-container ratio ratio-16x9 mb-0" style="border-color: var(--glass-border); border-radius: 28px 28px 0 0;">
-                            <iframe src="https://www.youtube.com/embed/c7TaNqr4CZY"
-                                title="Progress 3" frameborder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
-                            </iframe>
-                        </div>
-                        <div class="card-content text-center">
-                            <p class="mb-0 card-category" style="color: var(--accent-color);">Progress 3</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div id="footer"></div>
-
-    <script>
-        fetch('../layouts/footer.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('footer').innerHTML = data;
-            });
-    </script>
-
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
 </body>
 
 </html>

@@ -5,594 +5,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Celestial Bodies & Orbital Dynamics | Rick Justine Pabalan</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../layouts/theme.css">
-    <style>
-        :root {
-            --solar-orange: #ffb400;
-            --solar-bg: #0a0a0a;
-            --solar-sidebar: #0d0d0d;
-            --solar-card: #141414;
-            --solar-text-muted: rgba(255, 255, 255, 0.5);
-        }
-
-        body {
-            background-color: var(--solar-bg) !important;
-            color: #fff;
-            overflow-x: hidden;
-        }
-
-        .calculator-container video, 
-        .calculator-container img {
-            border: 0 !important;
-            outline: 0 !important;
-            box-shadow: none !important;
-        }
-
-        .calculator-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            max-width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Solar System Video Section */
-        .solar-hero-section {
-            padding: 4rem 2rem;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .solar-hero-container {
-            width: 100%;
-            max-width: 1200px;
-            aspect-ratio: 16 / 9;
-            background: #050505;
-            border-radius: 24px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .solar-hero-video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .solar-hero-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 2rem;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .solar-hero-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            color: var(--solar-orange);
-            font-weight: 800;
-        }
-
-        .solar-hero-title {
-            font-size: 2rem;
-            font-weight: 900;
-            margin: 0;
-        }
-
-        /* Header Styles */
-        .calc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: var(--solar-bg);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 90;
-        }
-
-        .calc-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 800;
-            font-size: 1.2rem;
-            text-transform: capitalize;
-        }
-
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--solar-orange);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: 900;
-        }
-
-        .calc-controls {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .age-input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .age-input-group label {
-            font-size: 0.8rem;
-            color: var(--solar-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .age-input-group input {
-            background: #1a1a1a;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #fff;
-            padding: 5px 12px;
-            border-radius: 6px;
-            width: 70px;
-            font-weight: 700;
-            text-align: center;
-            transition: border-color 0.2s;
-        }
-
-        .age-input-group input.invalid {
-            border-color: #ff4444;
-            box-shadow: 0 0 5px rgba(255, 68, 68, 0.3);
-        }
-
-        .validation-msg {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            color: #ff4444;
-            font-size: 0.65rem;
-            font-weight: 700;
-            margin-top: 4px;
-            display: none;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .validation-msg.visible {
-            display: block;
-        }
-
-        .calc-btn {
-            background: var(--solar-orange);
-            color: #000;
-            border: none;
-            padding: 8px 24px;
-            border-radius: 10px;
-            font-weight: 800;
-            text-transform: capitalize;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .calc-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(255, 180, 0, 0.3);
-        }
-
-        /* Layout Main */
-        .calc-main {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        /* Sidebar Navigation */
-        .calc-sidebar {
-            width: 80px;
-            background: var(--solar-sidebar);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem 0;
-            gap: 2.2rem;
-            overflow-y: auto;
-        }
-
-        .planet-nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            opacity: 0.4;
-            transition: all 0.3s;
-            width: 100%;
-        }
-
-        .planet-nav-item:hover, .planet-nav-item.active {
-            opacity: 1;
-        }
-
-        .planet-nav-item.active .planet-icon {
-            box-shadow: 0 0 20px var(--solar-orange);
-            background: rgba(255, 180, 0, 0.1);
-        }
-
-        .planet-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: none !important;
-            transition: all 0.3s;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-
-        .planet-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border: none !important;
-            outline: none !important;
-        }
-
-        .placeholder-dot {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: transparent;
-        }
-
-        .visual-placeholder {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0.6;
-            filter: blur(2px);
-        }
-
-        .planet-label {
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--solar-text-muted);
-        }
-
-        .planet-nav-item.active .planet-label {
-            color: #fff;
-        }
-
-        /* Center Display */
-        .calc-center {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            position: relative;
-            background: none;
-        }
-
-        .planet-visual-container {
-            width: 100%;
-            max-width: 800px;
-            aspect-ratio: 16/9;
-            position: relative;
-            margin-bottom: 2rem;
-            border: none !important;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
-            background: rgba(255,255,255,0.03) !important;
-            border-radius: 24px;
-            overflow: hidden;
-        }
-
-        .planet-visual {
-            width: 100%;
-            height: 100%;
-            border-radius: 0;
-            overflow: hidden;
-            position: relative;
-            z-index: 2;
-            box-shadow: none !important;
-            background: transparent !important;
-            border: none !important;
-            outline: none !important;
-            transform: translateZ(0);
-        }
-
-        /* Removed circle mask to show full video background */
-        /* @supports (mask-image: radial-gradient(white, black)) or (-webkit-mask-image: radial-gradient(white, black)) {
-            .planet-visual {
-                -webkit-mask-image: -webkit-radial-gradient(white, black);
-                mask-image: radial-gradient(white, black);
-            }
-        } */
-
-        .planet-visual video, .planet-visual img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            background: transparent !important;
-        }
-
-        .host-star-badge {
-            position: absolute;
-            top: -80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 180, 0, 0.1);
-            border: 1px solid var(--solar-orange);
-            color: var(--solar-orange);
-            padding: 4px 12px;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .planet-info {
-            text-align: center;
-            max-width: 500px;
-        }
-
-        .planet-main-name {
-            font-size: 6rem;
-            font-weight: 900;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
-            line-height: 1;
-        }
-
-        .planet-type {
-            font-size: 0.8rem;
-            color: var(--solar-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.3em;
-            margin-bottom: 1.5rem;
-            font-weight: 600;
-        }
-
-        .planet-description {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: var(--solar-text-muted);
-        }
-
-        .nav-arrows {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .nav-arrow {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--solar-text-muted);
-        }
-
-        .nav-arrow:hover {
-            border-color: #fff;
-            color: #fff;
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Right Sidebar */
-        .calc-right-sidebar {
-            width: 350px;
-            background: var(--solar-sidebar);
-            border-left: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            gap: 2.5rem;
-            overflow-y: auto;
-        }
-
-        .data-section-title {
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--solar-text-muted);
-            margin-bottom: 1.5rem;
-        }
-
-        .orbital-data-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-        }
-
-        .orbital-data-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-        }
-
-        .data-key {
-            color: var(--solar-text-muted);
-        }
-
-        .data-val {
-            font-weight: 800;
-            font-family: var(--font-mono);
-        }
-
-        .data-val span {
-            color: var(--solar-text-muted);
-            font-size: 0.8rem;
-            margin-left: 4px;
-        }
-
-        .result-card {
-            background: rgba(255, 180, 0, 0.03);
-            border: 1px solid rgba(255, 180, 0, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 1rem;
-            position: relative;
-        }
-
-        .result-card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 20px;
-            width: 40px;
-            height: 2px;
-            background: var(--solar-orange);
-        }
-
-        .result-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--solar-text-muted);
-            margin-bottom: 1rem;
-        }
-
-        .result-value {
-            font-size: 1.5rem;
-            font-weight: 900;
-            margin-bottom: 0.5rem;
-        }
-
-        .result-context {
-            font-size: 0.75rem;
-            color: var(--solar-text-muted);
-        }
-
-        /* Progress Bars Section */
-        .size-comparison-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .comparison-item {
-            display: grid;
-            grid-template-columns: 40px 1fr 40px;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .comp-label {
-            font-size: 0.65rem;
-            font-weight: 800;
-            color: var(--solar-text-muted);
-        }
-
-        .comp-bar-bg {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .comp-bar-fill {
-            height: 100%;
-            background: var(--solar-orange);
-            opacity: 0.6;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-
-        .comparison-item.active .comp-bar-fill {
-            opacity: 1;
-            box-shadow: 0 0 10px var(--solar-orange);
-        }
-
-        .comp-value {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-align: right;
-            color: var(--solar-text-muted);
-        }
-
-        /* Footer override */
-        #footer {
-            display: none;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 992px) {
-            .calc-main {
-                flex-direction: column;
-                overflow-y: auto;
-            }
-            .calc-sidebar {
-                width: 100%;
-                flex-direction: row;
-                height: auto;
-                padding: 1rem;
-            }
-            .calc-right-sidebar {
-                width: 100%;
-                border-left: none;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
-            }
-            .planet-main-name {
-                font-size: 3rem;
-            }
-            .planet-visual-container {
-                width: 100%;
-                max-width: 400px;
-                aspect-ratio: 16/9;
-                height: auto;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 
-<body>
-    <div id="header"></div>
+<body class="solar-body">
+
+    <nav class="glass-nav">
+        <div class="nav-container">
+            <a class="d-flex align-items-center gap-2" href="../index.html">
+                <span class="brand-mark">RP</span>
+                <span class="d-none d-sm-inline fw-bold">Multimedia Portfolio</span>
+            </a>
+
+            <button class="nav-toggler" id="menu-toggle" aria-label="Toggle navigation">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+
+            <div class="nav-menu" id="nav-menu">
+                <ul class="d-flex align-items-center gap-1 m-0 p-0 list-unstyled">
+                    <li><a class="nav-link" href="../index.html">Home</a></li>
+                    <li class="custom-dropdown">
+                        <a class="nav-link active" href="index.html">
+                            Portfolio
+                            <svg class="ms-1" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </a>
+                        <div class="dropdown-content glass">
+                            <a class="nav-link" href="index.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                Project Archive
+                            </a>
+                            <div class="divider-light"></div>
+                            <a class="nav-link" href="solarsystem.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                Blender — Solar System
+                            </a>
+                            <a class="nav-link" href="rotoscope.html">
+                                <svg class="me-2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                                Rotoscoping — Workflow
+                            </a>
+                        </div>
+                    </li>
+                    <li><a class="nav-link" href="../about.html">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
     <section class="solar-hero-section">
         <div class="solar-hero-container">
-            <!-- Placeholder for Solar System Visualization -->
-            <div class="solar-hero-placeholder d-flex align-items-center justify-content-center" style="width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(255, 180, 0, 0.05) 0%, transparent 70%);">
-                <div class="text-center" style="opacity: 0.2;">
-                    <i class="fas fa-video mb-3" style="font-size: 5rem; color: var(--solar-orange);"></i>
-                    <p class="mono" style="letter-spacing: 0.2em; font-size: 0.8rem;">FINAL VIDEO PLACEHOLDER</p>
+            <div class="solar-hero-placeholder d-flex align-items-center justify-content-center solar-hero-bg">
+                <div class="text-center opacity-20">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--solar-orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-3"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                    <p class="mono ls-2 fs-small">FINAL VIDEO PLACEHOLDER</p>
                 </div>
             </div>
             <div class="solar-hero-overlay">
@@ -602,15 +66,48 @@
         </div>
     </section>
 
+    <!-- Tools Used Section -->
+    <section class="section py-5">
+        <div class="container">
+            <h2 class="section-title text-center mb-5">TOOLS USED</h2>
+            <div class="tools-grid">
+                <!-- Blender -->
+                <div class="tool-item">
+                    <div class="glass tool-card lift fade-in">
+                        <div class="tool-logo-wrapper">
+                            <img src="../images/blender.png" alt="Blender" class="tool-logo">
+                        </div>
+                        <h3 class="tool-name">Blender</h3>
+                        <p class="tool-desc">
+                            Core software used for 3D modeling, texturing, and rendering the celestial bodies and their orbital paths.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Capcut -->
+                <div class="tool-item">
+                    <div class="glass tool-card lift fade-in">
+                        <div class="tool-logo-wrapper">
+                            <img src="../images/Capcut.webp" alt="Capcut" class="tool-logo">
+                        </div>
+                        <h3 class="tool-name">Capcut</h3>
+                        <p class="tool-desc">
+                            Utilized for final video post-processing, color grading, and adding atmospheric sound effects to the simulation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <div class="calculator-container">
-        <!-- Calculator Header -->
         <header class="calc-header">
             <div class="calc-logo">
                 <div class="logo-icon">CB</div>
                 <span>Celestial Bodies & Orbital Dynamics</span>
             </div>
             <div class="calc-controls">
-                <div class="age-input-group" style="position: relative;">
+                <div class="age-input-group position-relative">
                     <label for="earthAgeInput">Your age</label>
                     <input type="number" id="earthAgeInput" placeholder="--" min="0" step="any">
                     <div id="validationMsg" class="validation-msg">Invalid age</div>
@@ -622,15 +119,13 @@
         </header>
 
         <main class="calc-main">
-            <!-- Left Sidebar Navigation -->
             <aside class="calc-sidebar" id="planetSidebar">
                 <!-- Items injected by JS -->
             </aside>
 
-            <!-- Center Content -->
             <section class="calc-center">
                 <div class="planet-visual-container">
-                    <div id="hostStarBadge" class="host-star-badge" style="display: none;">Host Star</div>
+                    <div id="hostStarBadge" class="host-star-badge d-none">Host Star</div>
                     <div class="planet-visual" id="planetVisual">
                         <!-- Video or Image injected by JS -->
                     </div>
@@ -645,12 +140,15 @@
                 </div>
 
                 <div class="nav-arrows">
-                    <div class="nav-arrow" onclick="prevPlanet()"><i class="fas fa-arrow-left"></i></div>
-                    <div class="nav-arrow" onclick="nextPlanet()"><i class="fas fa-arrow-right"></i></div>
+                    <div class="nav-arrow" onclick="prevPlanet()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    </div>
+                    <div class="nav-arrow" onclick="nextPlanet()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </div>
                 </div>
             </section>
 
-            <!-- Right Sidebar Data -->
             <aside class="calc-right-sidebar">
                 <div class="orbital-data-section">
                     <h3 class="data-section-title">Orbital Data</h3>
@@ -690,353 +188,30 @@
         </main>
     </div>
 
-    <script>
-        const planetaryData = [
-            {
-                id: "sun",
-                name: "Sun",
-                shortName: "SUN",
-                type: "G-TYPE MAIN SEQUENCE · OUR STAR",
-                age: "4.6B",
-                period: "225M",
-                distance: "0",
-                description: "The Sun is a colossal nuclear furnace at the heart of our solar system, fusing hydrogen into helium and radiating energy that drives all life on Earth.",
-                color: "#ffb400",
-                icon: "../images/Sun.webp",
-                video: "./videos/sun.mp4",
-                ratio: null,
-                sizeLabel: "109x",
-                sizePercent: 100,
-                isStar: true
-            },
-            {
-                id: "mercury",
-                name: "Mercury",
-                shortName: "MER",
-                type: "TERRESTRIAL PLANET · IRON RICH",
-                age: null,
-                period: "88 Earth days",
-                distance: "57.9M km",
-                description: "Mercury is the closest planet to the Sun and the smallest in the solar system. It has a rocky, heavily cratered surface that looks similar to Earth's Moon and no significant atmosphere, which means it cannot trap heat. Because of this, temperatures swing extremely—from very hot during the day to freezing cold at night.",
-                color: "#8c8c8c",
-                icon: "../images/Mercury.webp",
-                video: "./videos/Mercury.mp4",
-                ratio: 0.240846,
-                sizeLabel: "38%",
-                sizePercent: 38
-            },
-            {
-                id: "venus",
-                name: "Venus",
-                shortName: "VEN",
-                type: "TERRESTRIAL PLANET · TOXIC ATMOSPHERE",
-                age: null,
-                period: "225 Earth days",
-                distance: "108.2M km",
-                description: "Venus is often called Earth's 'sister planet' because of its similar size and structure, but its environment is extremely hostile. It has a thick atmosphere made mostly of carbon dioxide with clouds of sulfuric acid, creating a strong greenhouse effect that makes it the hottest planet in the solar system. Its surface is dry, volcanic, and under crushing atmospheric pressure.",
-                color: "#e3bb76",
-                icon: "../images/Venus.webp",
-                video: "./videos/Venus.mp4",
-                ratio: 0.61519726,
-                sizeLabel: "95%",
-                sizePercent: 95
-            },
-            {
-                id: "earth",
-                name: "Earth",
-                shortName: "EAR",
-                type: "TERRESTRIAL PLANET · HABITABLE ZONE",
-                age: null,
-                period: "365.25 Earth days",
-                distance: "149.6M km",
-                description: "Earth is the only known planet that supports life. It has liquid water on its surface, a breathable atmosphere rich in nitrogen and oxygen, and a stable climate system. Its protective magnetic field and ozone layer help shield life from harmful solar radiation.",
-                color: "#2271b3",
-                icon: "../images/Earth.webp",
-                video: "./videos/Earth.mp4",
-                ratio: 1,
-                sizeLabel: "100%",
-                sizePercent: 100
-            },
-            {
-                id: "mars",
-                name: "Mars",
-                shortName: "MAR",
-                type: "TERRESTRIAL PLANET · RED WORLD",
-                age: null,
-                period: "687 Earth days",
-                distance: "227.9M km",
-                description: "Mars is known as the Red Planet because of iron oxide (rust) covering its surface. It is a cold desert world with the largest volcano in the solar system and deep canyons. Evidence suggests it once had rivers and lakes, making it a strong candidate for past microbial life.",
-                color: "#c1440e",
-                // icon: "../images/Mars.webp",
-                // video: "./videos/Mars.mp4",
-                ratio: 1.8808158,
-                sizeLabel: "53%",
-                sizePercent: 53
-            },
-            {
-                id: "jupiter",
-                name: "Jupiter",
-                shortName: "JUP",
-                type: "GAS GIANT · KING OF PLANETS",
-                age: null,
-                period: "4,333 Earth days",
-                distance: "778.6M km",
-                description: "Jupiter is the largest planet in the solar system and is made mostly of hydrogen and helium. It has a massive storm called the Great Red Spot, which has lasted for centuries. Its strong gravity and magnetic field influence many surrounding moons and space debris.",
-                color: "#d39c7e",
-                icon: "",
-                ratio: 11.862615,
-                sizeLabel: "11x",
-                sizePercent: 100
-            },
-            {
-                id: "saturn",
-                name: "Saturn",
-                shortName: "SAT",
-                type: "GAS GIANT · RINGED WORLD",
-                age: null,
-                period: "10,759 Earth days",
-                distance: "1.4B km",
-                description: "Saturn is famous for its bright, wide ring system made of ice and rock particles. It is a gas giant composed mainly of hydrogen and helium and has many moons, some of which are very interesting for scientific study, like Titan with its thick atmosphere.",
-                color: "#c5ab6e",
-                icon: "",
-                ratio: 29.447498,
-                sizeLabel: "9x",
-                sizePercent: 90
-            },
-            {
-                id: "uranus",
-                name: "Uranus",
-                shortName: "URA",
-                type: "ICE GIANT · TILTED WORLD",
-                age: null,
-                period: "30,687 Earth days",
-                distance: "2.9B km",
-                description: "Uranus is an ice giant with a bluish color caused by methane in its atmosphere. It is unique because it rotates on its side, likely due to a massive collision in the past. It has a very cold atmosphere and faint ring system.",
-                color: "#bbe1e4",
-                icon: "",
-                ratio: 84.016846,
-                sizeLabel: "4x",
-                sizePercent: 40
-            },
-            {
-                id: "neptune",
-                name: "Neptune",
-                shortName: "NEP",
-                type: "ICE GIANT · WINDY WORLD",
-                age: null,
-                period: "60,190 Earth days",
-                distance: "4.5B km",
-                description: "Neptune is the farthest planet from the Sun and is known for its deep blue color and extremely strong winds—the fastest in the solar system. It is an ice giant with a dynamic atmosphere and occasional massive storms, showing that it is still an active planet despite its distance.",
-                color: "#6081ff",
-                icon: "",
-                ratio: 164.79132,
-                sizeLabel: "4x",
-                sizePercent: 39
-            },
-            {
-                id: "pluto",
-                name: "Pluto",
-                shortName: "PLU",
-                type: "DWARF PLANET · DISTANT WORLD",
-                age: null,
-                period: "90,560 Earth days",
-                distance: "5.9B km",
-                description: "Pluto, a distant Kuiper Belt world, shows layered geology, frozen nitrogen plains, and a surprisingly active relationship with its largest moon, Charon.",
-                color: "#4a4a4a",
-                icon: "",
-                ratio: 248.09,
-                sizeLabel: "0.18x",
-                sizePercent: 2
-            }
-        ];
-
-        let currentPlanetIndex = 0;
-
-        function init() {
-            renderSidebar();
-            renderSizeComparison();
-            updateOrbitalData();
-
-            // Add real-time validation feedback
-            const ageInput = document.getElementById('earthAgeInput');
-            ageInput.addEventListener('input', updateOrbitalData);
-            ageInput.addEventListener('keypress', function(e) {
-                if (e.key === '-' || e.key === 'e' || e.key === 'E') {
-                    e.preventDefault();
-                }
-            });
-        }
-
-        function renderSidebar() {
-            const sidebar = document.getElementById('planetSidebar');
-            sidebar.innerHTML = '';
-            
-            planetaryData.forEach((planet, index) => {
-                const item = document.createElement('div');
-                item.className = `planet-nav-item ${index === currentPlanetIndex ? 'active' : ''}`;
-                item.onclick = () => selectPlanet(index);
-                
-                let iconHtml = '';
-                if (planet.icon) {
-                    iconHtml = `<img src="${planet.icon}" alt="${planet.name}" onerror="this.parentElement.innerHTML='<div class=\'placeholder-dot\'></div>'">`;
-                } else {
-                    iconHtml = `<div class="placeholder-dot" style="background: ${planet.color}"></div>`;
-                }
-
-                item.innerHTML = `
-                    <div class="planet-icon">
-                        ${iconHtml}
+    <footer class="glass-footer">
+        <div class="container">
+            <div class="row align-items-center justify-content-between">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="brand-mark">RP</div>
+                        <span class="fw-bold">Rick Justine Pabalan</span>
                     </div>
-                    <span class="planet-label">${planet.shortName}</span>
-                `;
-                sidebar.appendChild(item);
-            });
-        }
-
-        function renderSizeComparison() {
-            const list = document.getElementById('sizeComparisonList');
-            list.innerHTML = '';
-
-            planetaryData.forEach((planet, index) => {
-                const item = document.createElement('div');
-                item.className = `comparison-item ${index === currentPlanetIndex ? 'active' : ''}`;
-                item.innerHTML = `
-                    <span class="comp-label">${planet.shortName}</span>
-                    <div class="comp-bar-bg">
-                        <div class="comp-bar-fill" style="width: ${planet.sizePercent}%"></div>
+                    <p class="muted mb-0">Multimedia Artist & Creative Technologist based in the Philippines.</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex justify-content-md-end gap-3 mb-3">
+                        <a href="#" class="nav-link p-0">LinkedIn</a>
+                        <a href="#" class="nav-link p-0">Behance</a>
+                        <a href="#" class="nav-link p-0">GitHub</a>
                     </div>
-                    <span class="comp-value">${planet.sizeLabel}</span>
-                `;
-                list.appendChild(item);
-            });
-        }
+                    <p class="muted small mb-0">&copy; 2026 Rick Justine Pabalan. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-        function selectPlanet(index) {
-            currentPlanetIndex = index;
-            renderSidebar();
-            renderSizeComparison();
-            updateOrbitalData();
-        }
-
-        function nextPlanet() {
-            currentPlanetIndex = (currentPlanetIndex + 1) % planetaryData.length;
-            selectPlanet(currentPlanetIndex);
-        }
-
-        function prevPlanet() {
-            currentPlanetIndex = (currentPlanetIndex - 1 + planetaryData.length) % planetaryData.length;
-            selectPlanet(currentPlanetIndex);
-        }
-
-        function updateOrbitalData() {
-            const planet = planetaryData[currentPlanetIndex];
-            const ageInput = document.getElementById('earthAgeInput');
-            const validationMsg = document.getElementById('validationMsg');
-            
-            const rawValue = ageInput.value;
-            const earthAge = parseFloat(rawValue);
-            const hasValue = rawValue !== "";
-            
-            // Reset validation state
-            ageInput.classList.remove('invalid');
-            validationMsg.classList.remove('visible');
-
-            // Proper Validation: Check for invalid character (handled by type=number mostly), 
-            // empty but interacted, or negative number
-            let isValid = true;
-            if (hasValue) {
-                if (isNaN(earthAge) || earthAge < 0) {
-                    isValid = false;
-                    ageInput.classList.add('invalid');
-                    validationMsg.innerText = earthAge < 0 ? "No negatives" : "Invalid input";
-                    validationMsg.classList.add('visible');
-                }
-            }
-
-            // Update center info
-            document.getElementById('planetMainName').innerText = planet.name;
-            document.getElementById('planetType').innerText = planet.type;
-            document.getElementById('planetDescription').innerText = planet.description;
-            
-            const visual = document.getElementById('planetVisual');
-            visual.style.background = 'none';
-            if (planet.video) {
-                const timestamp = Date.now();
-                visual.innerHTML = `
-                    <video autoplay loop muted playsinline poster="${planet.icon || ''}" style="border:none !important; outline:none !important; box-shadow:none !important; background:transparent !important;">
-                        <source src="${planet.video}?v=${timestamp}" type="video/mp4" style="border:none !important; outline:none !important;">
-                    </video>
-                `;
-            } else if (planet.icon) {
-                visual.innerHTML = `<img src="${planet.icon}" alt="${planet.name}" style="border:none !important; outline:none !important; box-shadow:none !important; background:transparent !important;" onerror="this.parentElement.innerHTML='<div class=\'visual-placeholder\' style=\'background:${planet.color}\'></div>'">`;
-            } else {
-                visual.innerHTML = `<div class="visual-placeholder" style="background: ${planet.color}"></div>`;
-            }
-
-            document.getElementById('hostStarBadge').style.display = planet.isStar ? 'block' : 'none';
-
-            // Update orbital data
-            document.getElementById('dataAge').innerHTML = planet.age || `4.6B <span>years</span>`;
-            document.getElementById('dataPeriod').innerHTML = planet.period === 'N/A' ? '-' : planet.period;
-            
-            let displayRevs = '-';
-            if (planet.ratio) {
-                displayRevs = (1 / planet.ratio).toFixed(4);
-            }
-            document.getElementById('dataRevolutions').innerText = displayRevs;
-            document.getElementById('dataDistance').innerText = planet.distance;
-
-            // Update calculation result
-            const resultLabel = document.getElementById('resultLabel');
-            const resultValue = document.getElementById('resultValue');
-            const resultContext = document.getElementById('resultContext');
-
-            resultLabel.innerText = `YOUR AGE ON ${planet.name.toUpperCase()}`;
-
-            if (isValid && hasValue) {
-                resultContext.innerText = `Based on ${earthAge} Earth years`;
-                if (planet.ratio) {
-                    const planetAge = (earthAge / planet.ratio).toFixed(2);
-                    resultValue.innerText = planetAge;
-                } else if (!planet.ratio && !planet.isStar) {
-                    resultValue.innerText = earthAge;
-                } else {
-                    resultValue.innerText = "-";
-                }
-            } else {
-                resultContext.innerText = !isValid ? "Fix input to calculate" : "Enter your Earth age to calculate";
-                resultValue.innerText = "-";
-            }
-        }
-
-        // Initialize
-        init();
-
-        // Handle header fetching (existing logic)
-        fetch('../layouts/header.html?v=' + Date.now())
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('header').innerHTML = data;
-                // Fix relative paths in header when in subfolder
-                const links = document.querySelectorAll('a');
-                links.forEach(link => {
-                    const href = link.getAttribute('href');
-                    if (!href) return;
-                    if (href === 'index.html') link.href = "../index.html";
-                    if (href === 'about.html') link.href = "../about.html";
-                    if (href === 'portfolio/index.html') link.href = "index.html";
-                    if (href === 'portfolio/solarsystem.html') link.href = "solarsystem.html";
-                    if (href === 'portfolio/rotoscope.html') link.href = "rotoscope.html";
-                });
-
-                // Mark Portfolio as active when inside /portfolio
-                document.querySelectorAll('.nav-link').forEach(link => {
-                    const href = link.getAttribute('href') || '';
-                    if (href.includes('solarsystem.html') || href.includes('index.html')) link.classList.add('active');
-                });
-            });
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/solarsystem.js"></script>
 </body>
 
 </html>
