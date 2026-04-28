@@ -1,5 +1,5 @@
-/* jshint esversion: 6 */
-document.addEventListener('DOMContentLoaded', () => {
+// jshint esversion: 6
+document.addEventListener('DOMContentLoaded', function() {
     // Mobile Menu Toggle
     const menuToggle = document.getElementById('menu-toggle');
     const navMenu = document.getElementById('nav-menu');
