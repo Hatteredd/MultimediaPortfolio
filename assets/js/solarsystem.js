@@ -91,7 +91,8 @@ const planetaryData = [
         distance: "778.6M km",
         description: "Jupiter is the largest planet in the solar system and is made mostly of hydrogen and helium. It has a massive storm called the Great Red Spot, which has lasted for centuries. Its strong gravity and magnetic field influence many surrounding moons and space debris.",
         color: "#d39c7e",
-        icon: "",
+        icon: "../images/jupiter.webp",
+        video: "./videos/Jupiter.mp4",
         ratio: 11.862615,
         sizeLabel: "11x",
         sizePercent: 100
@@ -106,7 +107,8 @@ const planetaryData = [
         distance: "1.4B km",
         description: "Saturn is famous for its bright, wide ring system made of ice and rock particles. It is a gas giant composed mainly of hydrogen and helium and has many moons, some of which are very interesting for scientific study, like Titan with its thick atmosphere.",
         color: "#c5ab6e",
-        icon: "",
+        icon: "../images/saturn.webp",
+        video: "./videos/Saturn.mp4",
         ratio: 29.447498,
         sizeLabel: "9x",
         sizePercent: 90
@@ -121,7 +123,8 @@ const planetaryData = [
         distance: "2.9B km",
         description: "Uranus is an ice giant with a bluish color caused by methane in its atmosphere. It is unique because it rotates on its side, likely due to a massive collision in the past. It has a very cold atmosphere and faint ring system.",
         color: "#bbe1e4",
-        icon: "",
+        icon: "../images/uranus.webp",
+        video: "./videos/Uranus.mp4",
         ratio: 84.016846,
         sizeLabel: "4x",
         sizePercent: 40
@@ -136,7 +139,8 @@ const planetaryData = [
         distance: "4.5B km",
         description: "Neptune is the farthest planet from the Sun and is known for its deep blue color and extremely strong winds—the fastest in the solar system. It is an ice giant with a dynamic atmosphere and occasional massive storms, showing that it is still an active planet despite its distance.",
         color: "#6081ff",
-        icon: "",
+        icon: "../images/neptune.webp",
+        video: "./videos/Neptune.mp4",
         ratio: 164.79132,
         sizeLabel: "4x",
         sizePercent: 39
@@ -151,7 +155,8 @@ const planetaryData = [
         distance: "5.9B km",
         description: "Pluto, a distant Kuiper Belt world, shows layered geology, frozen nitrogen plains, and a surprisingly active relationship with its largest moon, Charon.",
         color: "#4a4a4a",
-        icon: "",
+        icon: "../images/pluto.webp",
+        video: "./videos/Pluto.mp4",
         ratio: 248.09,
         sizeLabel: "0.18x",
         sizePercent: 2
