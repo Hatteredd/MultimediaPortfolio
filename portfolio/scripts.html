@@ -579,21 +579,258 @@ setup_earth_system()</code></pre>
                     <div id="jupiter" class="script-content">
                         <div class="script-header">
                             <h3 class="m-0">Jupiter Automation</h3>
-                            <span class="tag tag-pending">PENDING</span>
+                            <span class="tag">PYTHON 3.10+</span>
                         </div>
                         <p class="muted fs-09">Manages complex differential rotation for the Great Red Spot and Jovian bands.</p>
-                        <div class="code-window opacity-50">
+                        <div class="code-window">
                             <div class="code-header">
                                 <div class="code-dots">
                                     <div class="dot dot-red"></div>
                                     <div class="dot dot-yellow"></div>
                                     <div class="dot dot-green"></div>
                                 </div>
-                                <span class="muted-2 fs-xs mono">jupiter_automation.py</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">jupiter_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'jupiter_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2-2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="p-5 text-center">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="10"></circle><path d="M2 12h20"></path><path d="M12 2v20"></path></svg>
-                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import math 
+import os 
+from pathlib import Path 
+
+import bpy 
+from mathutils import Matrix 
+
+JUPITER_NAME = "Jupiter" 
+MOON_NAMES = ["Moon", "Moon.001", "Moon.002", "Moon.003"] 
+MOON_LABELS = ["Io", "Europa", "Ganymede", "Callisto"] 
+
+FPS = 30 
+VIDEO_SECONDS = 10 
+FRAME_START = 1 
+FRAME_END = FPS * VIDEO_SECONDS 
+
+JUPITER_DIAMETER = 10.0 
+MOON_DIAMETERS = { 
+    "Io": 1.0,        
+    "Europa": 0.6,    
+    "Ganymede": 1.8,  
+    "Callisto": 1.3,  
+} 
+
+ORBIT_DISTANCES = [10.0, 14.0, 19.0, 25.0] 
+START_ANGLES_DEG = [205.0, 245.0, 295.0, 335.0] 
+
+JUPITER_SPIN_TURNS = 0.70 
+MOON_ORBIT_TURNS = { 
+    "Io": 0.90, 
+    "Europa": 0.48, 
+    "Ganymede": 0.25, 
+    "Callisto": 0.12, 
+} 
+
+JUPITER_AXIAL_TILT_DEG = 3.13 
+AUTO_PREFIX = "AUTO_JUPITER_ONLY_" 
+
+
+def get_object(name): 
+    obj = bpy.data.objects.get(name) 
+    if obj is None: 
+        raise RuntimeError(f"Missing required object named '{name}'.") 
+    return obj 
+
+
+def clear_previous_setup(): 
+    for obj in list(bpy.data.objects): 
+        if obj.name.startswith(AUTO_PREFIX): 
+            bpy.data.objects.remove(obj, do_unlink=True) 
+
+
+def clear_object_animation(obj): 
+    if obj.animation_data: 
+        obj.animation_data_clear() 
+
+
+def set_keyframes_linear(fcurve): 
+    for keyframe in fcurve.keyframe_points: 
+        keyframe.interpolation = "LINEAR" 
+
+
+def iter_layered_action_fcurves(action): 
+    for layer in getattr(action, "layers", []): 
+        for strip in getattr(layer, "strips", []): 
+            for channelbag in getattr(strip, "channelbags", []): 
+                for fcurve in getattr(channelbag, "fcurves", []): 
+                    yield fcurve 
+
+
+def set_linear_animation(obj, data_path="rotation_euler", indices=(0, 1, 2)): 
+    if not obj.animation_data or not obj.animation_data.action: 
+        return 
+
+    action = obj.animation_data.action 
+
+    try: 
+        legacy_fcurves = action.fcurves 
+    except AttributeError: 
+        legacy_fcurves = [] 
+
+    for fcurve in legacy_fcurves: 
+        if fcurve.data_path == data_path and fcurve.array_index in indices: 
+            set_keyframes_linear(fcurve) 
+
+    for fcurve in iter_layered_action_fcurves(action): 
+        if fcurve.data_path == data_path and fcurve.array_index in indices: 
+            set_keyframes_linear(fcurve) 
+
+
+def animate_z_rotation(obj, turns, start_angle=0.0): 
+    obj.rotation_mode = "XYZ" 
+    obj.rotation_euler = (obj.rotation_euler.x, obj.rotation_euler.y, start_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", frame=FRAME_START) 
+    obj.rotation_euler[2] = start_angle + (math.tau * turns) 
+    obj.keyframe_insert(data_path="rotation_euler", frame=FRAME_END) 
+    set_linear_animation(obj) 
+
+
+def force_exact_diameter(obj, target_diameter): 
+    obj.constraints.clear() 
+    obj.delta_scale = (1.0, 1.0, 1.0) 
+    bpy.context.view_layer.update() 
+    
+    current_scale_x = obj.scale.x if abs(obj.scale.x) > 0.0001 else 1.0 
+    
+    raw_width = obj.dimensions.x / current_scale_x 
+    if raw_width <= 0.001: 
+        raw_width = 1.0 
+        
+    exact_scale = target_diameter / raw_width 
+    obj.scale = (exact_scale, exact_scale, exact_scale) 
+    bpy.context.view_layer.update() 
+
+
+def setup_world_background(): 
+    scene = bpy.context.scene 
+    if not scene.world: 
+        scene.world = bpy.data.worlds.new("World") 
+    
+    world = scene.world 
+    world.use_nodes = True 
+    nodes = world.node_tree.nodes 
+    links = world.node_tree.links 
+    nodes.clear() 
+
+    node_bg = nodes.new(type='ShaderNodeBackground') 
+    node_out = nodes.new(type='ShaderNodeOutputWorld') 
+    node_tex = nodes.new(type='ShaderNodeTexEnvironment') 
+
+    star_img_path = r"D:\MultimediaPortfolio\images\2k_stars.jpg" 
+    if os.path.exists(star_img_path): 
+        node_tex.image = bpy.data.images.load(star_img_path) 
+        links.new(node_tex.outputs['Color'], node_bg.inputs['Color']) 
+        links.new(node_bg.outputs['Background'], node_out.inputs['Surface']) 
+        node_bg.inputs['Strength'].default_value = 1.0 
+
+
+def setup_exhibition_lighting(): 
+    for obj in bpy.data.objects: 
+        if obj.type == 'LIGHT': 
+            bpy.data.objects.remove(obj, do_unlink=True) 
+
+    bpy.ops.object.light_add(type='SUN', align='WORLD') 
+    key_light = bpy.context.active_object 
+    key_light.name = "Key_Sun" 
+    key_light.data.energy = 3.0 
+    key_light.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+
+    bpy.ops.object.light_add(type='SUN', align='WORLD') 
+    fill_light = bpy.context.active_object 
+    fill_light.name = "Fill_Sun" 
+    fill_light.data.energy = 0.6 
+    fill_light.rotation_euler = (math.radians(-60), math.radians(200), math.radians(-45)) 
+
+
+def setup_jupiter_animation(): 
+    jupiter = get_object(JUPITER_NAME) 
+    moons = [get_object(name) for name in MOON_NAMES] 
+
+    for obj in [jupiter] + moons: 
+        obj.parent = None 
+        obj.matrix_parent_inverse.identity() 
+        obj.location = (0.0, 0.0, 0.0) 
+        obj.rotation_euler = (0.0, 0.0, 0.0) 
+
+    clear_previous_setup() 
+
+    scene = bpy.context.scene 
+    scene.frame_start = FRAME_START 
+    scene.frame_end = FRAME_END 
+    scene.render.fps = FPS 
+
+    clear_object_animation(jupiter) 
+    for moon in moons: 
+        clear_object_animation(moon) 
+
+    force_exact_diameter(jupiter, JUPITER_DIAMETER) 
+    for moon, label in zip(moons, MOON_LABELS): 
+        force_exact_diameter(moon, MOON_DIAMETERS[label]) 
+
+    center = jupiter.location.copy() 
+
+    jupiter_axis = bpy.data.objects.new(AUTO_PREFIX + "Jupiter_Axis", None) 
+    jupiter_axis.empty_display_type = "PLAIN_AXES" 
+    jupiter_axis.empty_display_size = JUPITER_DIAMETER * 0.7 
+    jupiter_axis.location = center 
+    jupiter_axis.rotation_euler = (math.radians(JUPITER_AXIAL_TILT_DEG), 0.0, 0.0) 
+    bpy.context.scene.collection.objects.link(jupiter_axis) 
+
+    world_matrix = jupiter.matrix_world.copy() 
+    jupiter.parent = jupiter_axis 
+    jupiter.matrix_parent_inverse = jupiter_axis.matrix_world.inverted() 
+    jupiter.matrix_world = world_matrix 
+
+    animate_z_rotation(jupiter, JUPITER_SPIN_TURNS) 
+
+    moon_orbit_plane = bpy.data.objects.new(AUTO_PREFIX + "Moon_Orbit_Plane", None) 
+    moon_orbit_plane.empty_display_type = "PLAIN_AXES" 
+    moon_orbit_plane.empty_display_size = JUPITER_DIAMETER * 0.9 
+    moon_orbit_plane.location = center 
+    moon_orbit_plane.rotation_euler = jupiter_axis.rotation_euler 
+    bpy.context.scene.collection.objects.link(moon_orbit_plane) 
+
+    for index, (moon, label) in enumerate(zip(moons, MOON_LABELS)): 
+        orbit = bpy.data.objects.new(AUTO_PREFIX + f"{label}_Orbit", None) 
+        orbit.empty_display_type = "PLAIN_AXES" 
+        orbit.empty_display_size = 2.0 
+        orbit.parent = moon_orbit_plane 
+        orbit.location = (0.0, 0.0, 0.0) 
+        orbit.rotation_euler = (0.0, 0.0, 0.0) 
+        bpy.context.scene.collection.objects.link(orbit) 
+
+        moon.parent = orbit 
+        moon.matrix_parent_inverse = Matrix.Identity(4) 
+        moon.location = (ORBIT_DISTANCES[index], 0.0, 0.0) 
+
+        start_angle = math.radians(START_ANGLES_DEG[index]) 
+        animate_z_rotation(orbit, MOON_ORBIT_TURNS[label], start_angle) 
+        animate_z_rotation(moon, 0.0) 
+
+setup_world_background() 
+setup_exhibition_lighting() 
+setup_jupiter_animation() 
+
+print("SLEDGEHAMMER FIX APPLIED: Moon sizes forced perfectly!")</code></pre>
                             </div>
                         </div>
                     </div>
@@ -602,21 +839,127 @@ setup_earth_system()</code></pre>
                     <div id="saturn" class="script-content">
                         <div class="script-header">
                             <h3 class="m-0">Saturn Automation</h3>
-                            <span class="tag tag-pending">PENDING</span>
+                            <span class="tag">PYTHON 3.10+</span>
                         </div>
                         <p class="muted fs-09">Controls ring rotation speeds and tilt synchronization with the planetary body.</p>
-                        <div class="code-window opacity-50">
+                        <div class="code-window">
                             <div class="code-header">
                                 <div class="code-dots">
                                     <div class="dot dot-red"></div>
                                     <div class="dot dot-yellow"></div>
                                     <div class="dot dot-green"></div>
                                 </div>
-                                <span class="muted-2 fs-xs mono">saturn_automation.py</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">saturn_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'saturn_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="p-5 text-center">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="5"></circle><ellipse cx="12" cy="12" rx="10" ry="3"></ellipse></svg>
-                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+
+for obj in bpy.data.objects: 
+    if "Orbit_Pivot" in obj.name: 
+        bpy.data.objects.remove(obj, do_unlink=True) 
+
+FPS = 30 
+SECONDS = 10 
+TOTAL_FRAMES = FPS * SECONDS  
+
+scene = bpy.context.scene 
+scene.render.fps = FPS 
+scene.frame_start = 1 
+scene.frame_end = TOTAL_FRAMES 
+
+light_found = False 
+for obj in bpy.data.objects: 
+    if obj.type == 'LIGHT': 
+        obj.data.type = 'SUN' 
+        obj.data.energy = 3.0 
+        obj.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+        light_found = True 
+        break 
+
+if not light_found: 
+    bpy.ops.object.light_add(type='SUN', align='WORLD') 
+    sun = bpy.context.active_object 
+    sun.data.energy = 3.0 
+    sun.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+
+def make_linear(obj): 
+    if obj.animation_data and obj.animation_data.action: 
+        action = obj.animation_data.action 
+        fcurves = None 
+        
+        if not hasattr(action, 'fcurves'): 
+            from bpy_extras import anim_utils 
+            slot = obj.animation_data.action_slot 
+            if slot: 
+                channelbag = anim_utils.action_get_channelbag_for_slot(action, slot) 
+                if channelbag: 
+                    fcurves = channelbag.fcurves 
+        else: 
+            fcurves = action.fcurves 
+            
+        if fcurves: 
+            for fcurve in fcurves: 
+                for keyframe in fcurve.keyframe_points: 
+                    keyframe.interpolation = 'LINEAR' 
+
+def animate_rotation(obj, axis, start_angle, end_angle): 
+    obj.rotation_mode = 'XYZ' 
+    obj.animation_data_clear() 
+    obj.rotation_euler[axis] = math.radians(start_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=1) 
+    obj.rotation_euler[axis] = math.radians(end_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=TOTAL_FRAMES) 
+    make_linear(obj) 
+
+saturn = bpy.data.objects.get("Saturn") 
+
+if saturn: 
+    saturn.scale = (1.0, 1.0, 1.0) 
+    saturn.location = (0, 0, 0) 
+    animate_rotation(saturn, 2, 0, 360 * 4) 
+    saturn.rotation_euler[0] = 0 
+
+moon_1 = bpy.data.objects.get("Moon")      
+moon_2 = bpy.data.objects.get("Moon.001")  
+
+moons_config = [ 
+    {"obj": moon_1, "name": "Enceladus", "scale": 0.03, "distance": 3.5, "orbit_speed": 2.5, "spin_speed": 2.5}, 
+    {"obj": moon_2, "name": "Titan", "scale": 0.08, "distance": 6.5, "orbit_speed": 1.0, "spin_speed": 1.0} 
+] 
+
+if saturn: 
+    for data in moons_config: 
+        moon = data["obj"] 
+        if moon: 
+            moon.parent = None 
+            moon.location = (0, 0, 0) 
+            moon.scale = (data["scale"], data["scale"], data["scale"]) 
+            pivot = bpy.data.objects.new(f"Orbit_Pivot_{data['name']}", None) 
+            bpy.context.collection.objects.link(pivot) 
+            pivot.location = saturn.location 
+            pivot.rotation_mode = 'XYZ' 
+            moon.parent = pivot 
+            moon.matrix_parent_inverse.identity() 
+            moon.location = (data["distance"], 0, 0) 
+            animate_rotation(pivot, 2, 0, 360 * data["orbit_speed"]) 
+            animate_rotation(moon, 2, 0, 360 * data["spin_speed"]) 
+            pivot.rotation_euler[0] = 0 
+
+print("Saturn is now upright! Press Spacebar to play.")</code></pre>
                             </div>
                         </div>
                     </div>
@@ -625,21 +968,130 @@ setup_earth_system()</code></pre>
                     <div id="uranus" class="script-content">
                         <div class="script-header">
                             <h3 class="m-0">Uranus Automation</h3>
-                            <span class="tag tag-pending">PENDING</span>
+                            <span class="tag">PYTHON 3.10+</span>
                         </div>
                         <p class="muted fs-09">Calculates the unique 98-degree axial tilt rotation for the Uranian system.</p>
-                        <div class="code-window opacity-50">
+                        <div class="code-window">
                             <div class="code-header">
                                 <div class="code-dots">
                                     <div class="dot dot-red"></div>
                                     <div class="dot dot-yellow"></div>
                                     <div class="dot dot-green"></div>
                                 </div>
-                                <span class="muted-2 fs-xs mono">uranus_automation.py</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">uranus_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'uranus_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="p-5 text-center">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20"></path></svg>
-                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+
+for obj in bpy.data.objects: 
+    if "Orbit_Pivot" in obj.name: 
+        bpy.data.objects.remove(obj, do_unlink=True) 
+
+FPS = 30 
+SECONDS = 10 
+TOTAL_FRAMES = FPS * SECONDS  
+
+scene = bpy.context.scene 
+scene.render.fps = FPS 
+scene.frame_start = 1 
+scene.frame_end = TOTAL_FRAMES 
+
+light_found = False 
+for obj in bpy.data.objects: 
+    if obj.type == 'LIGHT': 
+        obj.data.type = 'SUN' 
+        obj.data.energy = 3.0 
+        obj.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+        light_found = True 
+        break 
+
+if not light_found: 
+    bpy.ops.object.light_add(type='SUN', align='WORLD') 
+    sun = bpy.context.active_object 
+    sun.data.energy = 3.0 
+    sun.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+
+def make_linear(obj): 
+    if obj.animation_data and obj.animation_data.action: 
+        action = obj.animation_data.action 
+        fcurves = None 
+        
+        if not hasattr(action, 'fcurves'): 
+            from bpy_extras import anim_utils 
+            slot = obj.animation_data.action_slot 
+            if slot: 
+                channelbag = anim_utils.action_get_channelbag_for_slot(action, slot) 
+                if channelbag: 
+                    fcurves = channelbag.fcurves 
+        else: 
+            fcurves = action.fcurves 
+            
+        if fcurves: 
+            for fcurve in fcurves: 
+                for keyframe in fcurve.keyframe_points: 
+                    keyframe.interpolation = 'LINEAR' 
+
+def animate_rotation(obj, axis, start_angle, end_angle): 
+    obj.rotation_mode = 'XYZ' 
+    obj.animation_data_clear() 
+    obj.rotation_euler[axis] = math.radians(start_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=1) 
+    obj.rotation_euler[axis] = math.radians(end_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=TOTAL_FRAMES) 
+    make_linear(obj) 
+
+uranus = bpy.data.objects.get("Uranus") 
+
+if uranus: 
+    uranus.scale = (1.0, 1.0, 1.0) 
+    uranus.location = (0, 0, 0) 
+    animate_rotation(uranus, 2, 0, -360 * 3) 
+    uranus.rotation_euler[0] = 0 
+
+moon_names = ["Moon", "Moon.001", "Moon.002", "Moon.003", "Moon.004"] 
+moon_objects = [bpy.data.objects.get(name) for name in moon_names] 
+
+moons_config = [ 
+    {"name": "Miranda", "scale": 0.015, "distance": 2.5, "speed": -4.0}, 
+    {"name": "Ariel",   "scale": 0.035, "distance": 3.5, "speed": -3.0}, 
+    {"name": "Umbriel", "scale": 0.035, "distance": 4.5, "speed": -2.2}, 
+    {"name": "Titania", "scale": 0.055, "distance": 5.8, "speed": -1.5}, 
+    {"name": "Oberon",  "scale": 0.050, "distance": 7.2, "speed": -1.0} 
+] 
+
+if uranus: 
+    for i, data in enumerate(moons_config): 
+        moon = moon_objects[i] if i < len(moon_objects) else None 
+        if moon: 
+            moon.parent = None 
+            moon.location = (0, 0, 0) 
+            moon.scale = (data["scale"], data["scale"], data["scale"]) 
+            pivot = bpy.data.objects.new(f"Orbit_Pivot_{data['name']}", None) 
+            bpy.context.collection.objects.link(pivot) 
+            pivot.location = uranus.location 
+            pivot.rotation_mode = 'XYZ' 
+            moon.parent = pivot 
+            moon.matrix_parent_inverse.identity() 
+            moon.location = (data["distance"], 0, 0) 
+            animate_rotation(pivot, 2, 0, 360 * data["speed"]) 
+            animate_rotation(moon, 2, 0, 360 * data["speed"]) 
+            pivot.rotation_euler[0] = 0 
+
+print("Uranus is now upright! Press Spacebar to play.")</code></pre>
                             </div>
                         </div>
                     </div>
@@ -648,21 +1100,122 @@ setup_earth_system()</code></pre>
                     <div id="neptune" class="script-content">
                         <div class="script-header">
                             <h3 class="m-0">Neptune Automation</h3>
-                            <span class="tag tag-pending">PENDING</span>
+                            <span class="tag">PYTHON 3.10+</span>
                         </div>
                         <p class="muted fs-09">Automates high-speed wind simulation and dark spot movement patterns.</p>
-                        <div class="code-window opacity-50">
+                        <div class="code-window">
                             <div class="code-header">
                                 <div class="code-dots">
                                     <div class="dot dot-red"></div>
                                     <div class="dot dot-yellow"></div>
                                     <div class="dot dot-green"></div>
                                 </div>
-                                <span class="muted-2 fs-xs mono">neptune_automation.py</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">neptune_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'neptune_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="p-5 text-center">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="12" cy="12" r="10"></circle><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+
+for obj in bpy.data.objects: 
+    if "Orbit_Pivot" in obj.name: 
+        bpy.data.objects.remove(obj, do_unlink=True) 
+
+FPS = 30 
+SECONDS = 10 
+TOTAL_FRAMES = FPS * SECONDS  
+
+scene = bpy.context.scene 
+scene.render.fps = FPS 
+scene.frame_start = 1 
+scene.frame_end = TOTAL_FRAMES 
+
+light_found = False 
+for obj in bpy.data.objects: 
+    if obj.type == 'LIGHT': 
+        obj.data.type = 'SUN' 
+        obj.data.energy = 3.0 
+        obj.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+        light_found = True 
+        break 
+
+if not light_found: 
+    bpy.ops.object.light_add(type='SUN', align='WORLD') 
+    sun = bpy.context.active_object 
+    sun.data.energy = 3.0 
+    sun.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+
+def make_linear(obj): 
+    if obj.animation_data and obj.animation_data.action: 
+        action = obj.animation_data.action 
+        fcurves = None 
+        
+        if not hasattr(action, 'fcurves'): 
+            from bpy_extras import anim_utils 
+            slot = obj.animation_data.action_slot 
+            if slot: 
+                channelbag = anim_utils.action_get_channelbag_for_slot(action, slot) 
+                if channelbag: 
+                    fcurves = channelbag.fcurves 
+        else: 
+            fcurves = action.fcurves 
+            
+        if fcurves: 
+            for fcurve in fcurves: 
+                for keyframe in fcurve.keyframe_points: 
+                    keyframe.interpolation = 'LINEAR' 
+
+def animate_rotation(obj, axis, start_angle, end_angle): 
+    obj.rotation_mode = 'XYZ' 
+    obj.animation_data_clear() 
+    
+    obj.rotation_euler[axis] = math.radians(start_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=1) 
+    obj.rotation_euler[axis] = math.radians(end_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=TOTAL_FRAMES) 
+    make_linear(obj) 
+
+neptune = bpy.data.objects.get("Neptune") 
+
+if neptune: 
+    neptune.scale = (1.0, 1.0, 1.0) 
+    neptune.location = (0, 0, 0) 
+    animate_rotation(neptune, 2, 0, 360 * 2.0) 
+    neptune.rotation_euler[0] = 0 
+
+triton = bpy.data.objects.get("Moon") 
+
+if neptune and triton: 
+    triton.parent = None 
+    triton.location = (0, 0, 0) 
+    triton.scale = (0.06, 0.06, 0.06) 
+    
+    pivot = bpy.data.objects.new("Orbit_Pivot_Triton", None) 
+    bpy.context.collection.objects.link(pivot) 
+    pivot.location = neptune.location 
+    pivot.rotation_mode = 'XYZ' 
+    
+    triton.parent = pivot 
+    triton.matrix_parent_inverse.identity() 
+    triton.location = (4.5, 0, 0) 
+    
+    animate_rotation(pivot, 2, 0, -360 * 0.25) 
+    animate_rotation(triton, 2, 0, -360 * 0.25) 
+    pivot.rotation_euler[0] = 0 
+
+print("Cinematic speeds applied! Press Spacebar to play.")</code></pre>
                             </div>
                         </div>
                     </div>
@@ -671,21 +1224,144 @@ setup_earth_system()</code></pre>
                     <div id="pluto" class="script-content">
                         <div class="script-header">
                             <h3 class="m-0">Pluto Automation</h3>
-                            <span class="tag tag-pending">PENDING</span>
+                            <span class="tag">PYTHON 3.10+</span>
                         </div>
                         <p class="muted fs-09">Handles the binary orbital rotation with Charon and eccentric axial movement.</p>
-                        <div class="code-window opacity-50">
+                        <div class="code-window">
                             <div class="code-header">
                                 <div class="code-dots">
                                     <div class="dot dot-red"></div>
                                     <div class="dot dot-yellow"></div>
                                     <div class="dot dot-green"></div>
                                 </div>
-                                <span class="muted-2 fs-xs mono">pluto_automation.py</span>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">pluto_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'pluto_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="p-5 text-center">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-3 opacity-20"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="5"></circle><path d="M12 12l4 4"></path></svg>
-                                <p class="muted-2 mono fs-xs">// Script implementation in progress</p>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy 
+import math 
+import os 
+
+cleanup_names = ["Pluto", "Charon", "Styx", "Nix", "Kerberos", "Hydra"] 
+for obj in bpy.data.objects: 
+    if obj.name in cleanup_names or "Orbit_Pivot" in obj.name or obj.type == 'LIGHT': 
+        bpy.data.objects.remove(obj, do_unlink=True) 
+
+FPS = 30 
+SECONDS = 10 
+TOTAL_FRAMES = FPS * SECONDS  
+TEXTURE_PATH = r"C:\Users\Rick\Downloads\plutomap2k.jpg" 
+
+scene = bpy.context.scene 
+scene.render.fps = FPS 
+scene.frame_start = 1 
+scene.frame_end = TOTAL_FRAMES 
+
+bpy.ops.object.light_add(type='SUN', align='WORLD') 
+key_light = bpy.context.active_object 
+key_light.name = "Key_Sun" 
+key_light.data.energy = 3.0 
+key_light.rotation_euler = (math.radians(60), math.radians(20), math.radians(45)) 
+
+bpy.ops.object.light_add(type='SUN', align='WORLD') 
+fill_light = bpy.context.active_object 
+fill_light.name = "Fill_Sun" 
+fill_light.data.energy = 0.6  
+fill_light.rotation_euler = (math.radians(-60), math.radians(200), math.radians(-45)) 
+
+def make_linear(obj): 
+    if obj.animation_data and obj.animation_data.action: 
+        action = obj.animation_data.action 
+        fcurves = None 
+        
+        if not hasattr(action, 'fcurves'): 
+            from bpy_extras import anim_utils 
+            slot = obj.animation_data.action_slot 
+            if slot: 
+                channelbag = anim_utils.action_get_channelbag_for_slot(action, slot) 
+                if channelbag: 
+                    fcurves = channelbag.fcurves 
+        else: 
+            fcurves = action.fcurves 
+            
+        if fcurves: 
+            for fcurve in fcurves: 
+                for keyframe in fcurve.keyframe_points: 
+                    keyframe.interpolation = 'LINEAR' 
+
+def animate_rotation(obj, axis, start_angle, end_angle): 
+    obj.rotation_mode = 'XYZ' 
+    obj.animation_data_clear() 
+    obj.rotation_euler[axis] = math.radians(start_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=1) 
+    obj.rotation_euler[axis] = math.radians(end_angle) 
+    obj.keyframe_insert(data_path="rotation_euler", index=axis, frame=TOTAL_FRAMES) 
+    make_linear(obj) 
+
+bpy.ops.mesh.primitive_uv_sphere_add(radius=1, segments=64, ring_count=32) 
+pluto = bpy.context.active_object 
+pluto.name = "Pluto" 
+bpy.ops.object.shade_smooth() 
+
+mat = bpy.data.materials.new(name="Pluto_Material") 
+mat.use_nodes = True 
+bsdf = mat.node_tree.nodes.get("Principled BSDF") 
+
+if os.path.exists(TEXTURE_PATH): 
+    tex_image = mat.node_tree.nodes.new('ShaderNodeTexImage') 
+    tex_image.image = bpy.data.images.load(TEXTURE_PATH) 
+    mat.node_tree.links.new(tex_image.outputs['Color'], bsdf.inputs['Base Color']) 
+    mat.node_tree.links.new(tex_image.outputs['Color'], bsdf.inputs['Roughness']) 
+else: 
+    print(f"WARNING: Texture not found at {TEXTURE_PATH}. Applied default material.") 
+
+pluto.data.materials.append(mat) 
+
+animate_rotation(pluto, 2, 0, -360 * 2.0) 
+pluto.rotation_euler[0] = math.radians(122.5) 
+
+moon_names = ["Moon", "Moon.001", "Moon.002", "Moon.003", "Moon.004"] 
+moon_objects = [bpy.data.objects.get(name) for name in moon_names] 
+
+moons_config = [ 
+    {"name": "Charon",   "scale": 0.50,  "distance": 8.0,  "speed": -1.0}, 
+    {"name": "Styx",     "scale": 0.05,  "distance": 11.0, "speed": -0.8}, 
+    {"name": "Nix",      "scale": 0.08,  "distance": 14.0, "speed": -0.6}, 
+    {"name": "Kerberos", "scale": 0.04,  "distance": 17.0, "speed": -0.4}, 
+    {"name": "Hydra",    "scale": 0.09,  "distance": 20.0, "speed": -0.2} 
+] 
+
+for i, data in enumerate(moons_config): 
+    moon = moon_objects[i] if i < len(moon_objects) else None 
+    if moon: 
+        moon.parent = None 
+        moon.location = (0, 0, 0) 
+        moon.rotation_euler = (0, 0, 0) 
+        moon.scale = (data["scale"], data["scale"], data["scale"]) 
+        pivot = bpy.data.objects.new(f"Orbit_Pivot_{data['name']}", None) 
+        bpy.context.collection.objects.link(pivot) 
+        pivot.location = pluto.location 
+        pivot.rotation_mode = 'XYZ' 
+        moon.parent = pivot 
+        moon.matrix_parent_inverse.identity() 
+        moon.location = (data["distance"], 0, 0) 
+        animate_rotation(pivot, 2, 0, -360 * data["speed"]) 
+        animate_rotation(moon, 2, 0, -360 * data["speed"]) 
+        pivot.rotation_euler[0] = math.radians(122.5) 
+
+print("Lighting fixed and wider orbits restored! Press Spacebar to play.")</code></pre>
                             </div>
                         </div>
                     </div>
