@@ -44,19 +44,21 @@ document.addEventListener('DOMContentLoaded', function() {
     dropdowns.forEach(dropdown => {
         const link = dropdown.querySelector('.nav-link');
         
-        link.addEventListener('click', (e) => {
-            if (window.innerWidth > 768 && !dropdown.classList.contains('open')) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                // Close other dropdowns
-                dropdowns.forEach(d => {
-                    if (d !== dropdown) d.classList.remove('open');
-                });
-                
-                dropdown.classList.add('open');
-            }
-        });
+        if (link) {
+            link.addEventListener('click', (e) => {
+                if (window.innerWidth > 768 && !dropdown.classList.contains('open')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Close other dropdowns
+                    dropdowns.forEach(d => {
+                        if (d !== dropdown) d.classList.remove('open');
+                    });
+                    
+                    dropdown.classList.add('open');
+                }
+            });
+        }
 
         // Remove open class on mouse leave to prevent stuck dropdowns on desktop
         dropdown.addEventListener('mouseleave', () => {
@@ -79,20 +81,28 @@ document.addEventListener('DOMContentLoaded', function() {
         threshold: 0.1
     };
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
 
-    fadeElements.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(20px)';
-        el.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
-        observer.observe(el);
-    });
+        fadeElements.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+            observer.observe(el);
+        });
+    } else {
+        // Fallback for older browsers
+        fadeElements.forEach(el => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        });
+    }
 });
