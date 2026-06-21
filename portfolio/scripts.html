@@ -222,6 +222,7 @@
                             <a class="nav-link" href="#uranus">Uranus</a>
                             <a class="nav-link" href="#neptune">Neptune</a>
                             <a class="nav-link" href="#pluto">Pluto</a>
+                            <a class="nav-link" href="#full-solar-system">Full Solar System</a>
                         </div>
                     </li>
                     <li><a class="nav-link" href="../about.html">About</a></li>
@@ -255,6 +256,7 @@
                     <a href="#uranus" class="planet-nav-item">Uranus</a>
                     <a href="#neptune" class="planet-nav-item">Neptune</a>
                     <a href="#pluto" class="planet-nav-item">Pluto</a>
+                    <a href="#full-solar-system" class="planet-nav-item">Full Solar System</a>
                 </aside>
 
                 <!-- Script Content Area -->
@@ -1462,6 +1464,706 @@ for i, data in enumerate(moons_config):
         pivot.rotation_euler[0] = math.radians(122.5) 
 
 print("Lighting fixed and wider orbits restored! Press Spacebar to play.")</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full Solar System Script -->
+                    <div id="full-solar-system" class="script-content">
+                        <div class="script-header">
+                            <h2 class="m-0">Full Solar System Automation</h2>
+                            <span class="tag">PYTHON 3.10+</span>
+                        </div>
+                        <p class="muted fs-09">Complete Blender script for building the entire solar system with animations, lighting, and compositing.</p>
+                        <div class="code-window">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">solar-system-full-script.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'solar-system-full-script.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy
+import math
+import os
+import random
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+TEXTURE_DIR = r"D:\Texture\Blender Textures"
+
+RENDER_ENGINE = "BLENDER_EEVEE"
+RESOLUTION_X  = 1920
+RESOLUTION_Y  = 1080
+FRAME_START    = 1
+FRAME_END      = 1500
+USE_BLOOM      = True
+
+# ============================================================
+# UTILITIES
+# ============================================================
+def tex(filename):
+    return os.path.join(TEXTURE_DIR, filename)
+
+def load_img(filepath):
+    if not filepath or not os.path.exists(filepath):
+        print(f"  ✗ Missing: {filepath}")
+        return None
+    try:
+        img = bpy.data.images.load(filepath)
+        print(f"  ✓ Loaded: {os.path.basename(filepath)}")
+        return img
+    except Exception as e:
+        print(f"  ✗ Error: {e}")
+        return None
+
+def set_interp(obj, mode='LINEAR'):
+    ad = getattr(obj, "animation_data", None)
+    if not ad: return
+    act = getattr(ad, "action", None)
+    if not act: return
+    fcurves = getattr(act, "fcurves", None)
+    if not fcurves: return
+    for fc in fcurves:
+        for kf in fc.keyframe_points:
+            kf.interpolation = mode
+
+# ============================================================
+# SCENE SETUP
+# ============================================================
+def build_environment():
+    for obj in list(bpy.data.objects):
+        bpy.data.objects.remove(obj, do_unlink=True)
+    for mat in list(bpy.data.materials):
+        bpy.data.materials.remove(mat, do_unlink=True)
+    for col in list(bpy.data.collections):
+        bpy.data.collections.remove(col)
+
+    scene = bpy.context.scene
+    scene.frame_start = FRAME_START
+    scene.frame_end   = FRAME_END
+    scene.render.engine        = RENDER_ENGINE
+    scene.render.resolution_x  = RESOLUTION_X
+    scene.render.resolution_y  = RESOLUTION_Y
+    scene.render.film_transparent = False
+
+    scene.view_settings.view_transform = 'Filmic'
+    scene.view_settings.exposure       = 0.0
+    scene.view_settings.gamma          = 1.0
+    scene.view_settings.look           = 'Medium High Contrast'
+
+    if scene.render.engine == "BLENDER_EEVEE":
+        eevee = scene.eevee
+        if hasattr(eevee, "use_bloom"):
+            eevee.use_bloom = USE_BLOOM
+            if hasattr(eevee, "bloom_intensity"):  eevee.bloom_intensity = 0.3
+            if hasattr(eevee, "bloom_threshold"):  eevee.bloom_threshold = 2.0
+            if hasattr(eevee, "bloom_radius"):     eevee.bloom_radius = 6.0
+            if hasattr(eevee, "bloom_clamp"):      eevee.bloom_clamp = 5.0
+            if hasattr(eevee, "bloom_knee"):       eevee.bloom_knee = 0.5
+        if hasattr(eevee, "use_ssr"):
+            eevee.use_ssr = True
+            if hasattr(eevee, "use_ssr_halfres"):  eevee.use_ssr_halfres = False
+        if hasattr(eevee, "use_soft_shadows"):     eevee.use_soft_shadows = True
+        if hasattr(eevee, "shadow_cube_size"):     eevee.shadow_cube_size = '2048'
+        if hasattr(eevee, "shadow_cascade_size"):  eevee.shadow_cascade_size = '2048'
+        if hasattr(eevee, "taa_render_samples"):   eevee.taa_render_samples = 128
+        if hasattr(eevee, "taa_samples"):          eevee.taa_samples = 32
+        if hasattr(eevee, "use_gtao"):
+            eevee.use_gtao = True
+            if hasattr(eevee, "gtao_distance"): eevee.gtao_distance = 1.5
+            if hasattr(eevee, "gtao_factor"):   eevee.gtao_factor = 0.8
+        # Volumetrics: very low density so it doesn't eat light at long range
+        if hasattr(eevee, "use_volumetric_lights"):    eevee.use_volumetric_lights = True
+        if hasattr(eevee, "volumetric_start"):         eevee.volumetric_start = 0.1
+        if hasattr(eevee, "volumetric_end"):           eevee.volumetric_end = 350.0
+        if hasattr(eevee, "volumetric_tile_size"):     eevee.volumetric_tile_size = '8'
+        if hasattr(eevee, "volumetric_samples"):       eevee.volumetric_samples = 64
+        if hasattr(eevee, "use_volumetric_shadows"):   eevee.use_volumetric_shadows = False
+        if hasattr(eevee, "use_overscan"):
+            eevee.use_overscan = True
+            if hasattr(eevee, "overscan_size"): eevee.overscan_size = 10.0
+
+    world = bpy.data.worlds.new("World")
+    scene.world = world
+    world.use_nodes = True
+    wnt = world.node_tree
+    wnt.nodes.clear()
+
+    bg  = wnt.nodes.new("ShaderNodeBackground")
+    out = wnt.nodes.new("ShaderNodeOutputWorld")
+    bg.location  = (100, 300)
+    out.location = (400, 300)
+
+    # Very thin volumetric – just enough for subtle god rays, not enough to darken outer planets
+    vol = wnt.nodes.new("ShaderNodeVolumePrincipled")
+    vol.location = (100, 0)
+    vol.inputs["Density"].default_value    = 0.00003
+    vol.inputs["Anisotropy"].default_value = 0.6
+    if "Color" in vol.inputs:
+        vol.inputs["Color"].default_value = (1.0, 0.97, 0.92, 1.0)
+
+    star_img = load_img(tex("Stars.jpg"))
+    if star_img:
+        tc  = wnt.nodes.new("ShaderNodeTexCoord");        tc.location  = (-800, 300)
+        mp  = wnt.nodes.new("ShaderNodeMapping");         mp.location  = (-600, 300)
+        env = wnt.nodes.new("ShaderNodeTexEnvironment");  env.location = (-380, 300)
+        env.image = star_img
+        wnt.links.new(tc.outputs["Generated"], mp.inputs["Vector"])
+        wnt.links.new(mp.outputs["Vector"],    env.inputs["Vector"])
+        wnt.links.new(env.outputs["Color"],    bg.inputs["Color"])
+    else:
+        bg.inputs["Color"].default_value = (0.0, 0.0, 0.01, 1.0)
+
+    bg.inputs["Strength"].default_value = 0.5
+    wnt.links.new(bg.outputs["Background"], out.inputs["Surface"])
+    wnt.links.new(vol.outputs["Volume"],    out.inputs["Volume"])
+
+# ============================================================
+# MATERIALS
+# ============================================================
+def make_planet_mat(name, texture_file, roughness=0.85, fallback=(0.5,0.5,0.5,1)):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out  = nodes.new("ShaderNodeOutputMaterial");  out.location  = (600, 0)
+    bsdf = nodes.new("ShaderNodeBsdfPrincipled");  bsdf.location = (300, 0)
+    bsdf.inputs["Roughness"].default_value = roughness
+
+    coord = nodes.new("ShaderNodeTexCoord");  coord.location = (-600, 0)
+    mp    = nodes.new("ShaderNodeMapping");   mp.location    = (-400, 0)
+    img   = nodes.new("ShaderNodeTexImage");  img.location   = (-180, 0)
+
+    links.new(coord.outputs["UV"],    mp.inputs["Vector"])
+    links.new(mp.outputs["Vector"],   img.inputs["Vector"])
+
+    loaded = load_img(tex(texture_file))
+    if loaded:
+        img.image = loaded
+        links.new(img.outputs["Color"], bsdf.inputs["Base Color"])
+    else:
+        bsdf.inputs["Base Color"].default_value = fallback
+
+    links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    return mat
+
+
+def make_sun_mat():
+    mat = bpy.data.materials.new(name="Sun_Mat")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out  = nodes.new("ShaderNodeOutputMaterial"); out.location  = (600, 0)
+    emit = nodes.new("ShaderNodeEmission");       emit.location = (300, 0)
+    emit.inputs["Strength"].default_value = 2.5
+
+    coord = nodes.new("ShaderNodeTexCoord"); coord.location = (-600, 0)
+    mp    = nodes.new("ShaderNodeMapping");  mp.location    = (-400, 0)
+    img   = nodes.new("ShaderNodeTexImage"); img.location   = (-180, 0)
+
+    links.new(coord.outputs["UV"],  mp.inputs["Vector"])
+    links.new(mp.outputs["Vector"], img.inputs["Vector"])
+
+    loaded = load_img(tex("Sun.jpg"))
+    if loaded:
+        img.image = loaded
+        links.new(img.outputs["Color"], emit.inputs["Color"])
+    else:
+        emit.inputs["Color"].default_value = (1.0, 0.55, 0.1, 1.0)
+
+    links.new(emit.outputs["Emission"], out.inputs["Surface"])
+    return mat
+
+
+def make_corona_mat():
+    mat = bpy.data.materials.new(name="Corona_Mat")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out   = nodes.new("ShaderNodeOutputMaterial"); out.location   = (900, 0)
+    emit  = nodes.new("ShaderNodeEmission");       emit.location  = (500, 100)
+    trans = nodes.new("ShaderNodeBsdfTransparent"); trans.location = (500, -100)
+    fres  = nodes.new("ShaderNodeFresnel");        fres.location  = (100, 200)
+    ramp  = nodes.new("ShaderNodeValToRGB");       ramp.location  = (300, 200)
+    mx    = nodes.new("ShaderNodeMixShader");      mx.location    = (700, 0)
+
+    emit.inputs["Color"].default_value    = (1.0, 0.35, 0.02, 1)
+    emit.inputs["Strength"].default_value = 1.5
+    fres.inputs["IOR"].default_value = 1.12
+    ramp.color_ramp.elements[0].position = 0.0
+    ramp.color_ramp.elements[0].color = (0, 0, 0, 1)
+    ramp.color_ramp.elements[1].position = 0.65
+    ramp.color_ramp.elements[1].color = (1, 1, 1, 1)
+
+    links.new(fres.outputs["Fac"],    ramp.inputs["Fac"])
+    links.new(ramp.outputs["Color"],  mx.inputs[0])
+    links.new(trans.outputs["BSDF"],  mx.inputs[1])
+    links.new(emit.outputs["Emission"], mx.inputs[2])
+    links.new(mx.outputs["Shader"],   out.inputs["Surface"])
+
+    mat.blend_method = "BLEND"
+    if hasattr(mat, "shadow_method"): mat.shadow_method = "NONE"
+    mat.use_backface_culling = False
+    return mat
+
+
+def make_ring_mat():
+    mat = bpy.data.materials.new(name="Ring_Mat")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+    out  = nodes.new("ShaderNodeOutputMaterial"); out.location  = (600, 0)
+    bsdf = nodes.new("ShaderNodeBsdfPrincipled"); bsdf.location = (300, 0)
+    bsdf.inputs["Roughness"].default_value  = 0.9
+    bsdf.inputs["Alpha"].default_value      = 0.65
+    bsdf.inputs["Base Color"].default_value = (0.85, 0.78, 0.65, 1.0)
+    links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+    mat.blend_method = "BLEND"
+    if hasattr(mat, "shadow_method"): mat.shadow_method = "NONE"
+    return mat
+
+
+def make_solid_mat(name, color=(0.8,0.8,0.8,1), metallic=0.0, roughness=0.5):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Base Color"].default_value = color
+    bsdf.inputs["Metallic"].default_value   = metallic
+    bsdf.inputs["Roughness"].default_value  = roughness
+    return mat
+
+# ============================================================
+# OBJECT HELPERS
+# ============================================================
+def add_globe(name, radius, location=(0,0,0), segments=64, rings=32):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, segments=segments, ring_count=rings)
+    obj = bpy.context.active_object; obj.name = name
+    bpy.ops.object.shade_smooth()
+    return obj
+
+def add_flat_ring(name, radius, location=(0,0,0)):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=128, radius=radius, depth=0.001, location=location)
+    obj = bpy.context.active_object; obj.name = name
+    bpy.ops.object.shade_smooth()
+    return obj
+
+def add_anchor(name, location=(0,0,0)):
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=location)
+    obj = bpy.context.active_object; obj.name = name
+    return obj
+
+def add_light(name, location, energy, radius=0.5, color=(1,0.9,0.7), use_shadow=True, light_type='POINT'):
+    bpy.ops.object.light_add(type=light_type, location=location)
+    light = bpy.context.active_object; light.name = name
+    light.data.energy = energy; light.data.color = color
+    if hasattr(light.data, "shadow_soft_size"): light.data.shadow_soft_size = radius
+    light.data.use_shadow = use_shadow
+    if light_type == 'POINT' and hasattr(light.data, "use_contact_shadow"):
+        light.data.use_contact_shadow = True
+        if hasattr(light.data, "contact_shadow_distance"): light.data.contact_shadow_distance = 15.0
+        if hasattr(light.data, "contact_shadow_bias"):     light.data.contact_shadow_bias = 0.005
+        if hasattr(light.data, "contact_shadow_thickness"):light.data.contact_shadow_thickness = 0.5
+    return light
+
+def assign_mat(obj, mat):
+    if obj.data.materials: obj.data.materials[0] = mat
+    else: obj.data.materials.append(mat)
+
+# ============================================================
+# SATELLITE
+# ============================================================
+def build_satellite(orbit_r, pivot_obj, scale_factor):
+    bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0,0,0))
+    root = bpy.context.active_object; root.name = "Satellite_Root"
+    mb  = make_solid_mat("SAT_Body",  (0.75,0.77,0.80,1), 0.35, 0.35)
+    mpn = make_solid_mat("SAT_Panel", (0.08,0.14,0.28,1), 0.05, 0.25)
+    mf  = make_solid_mat("SAT_Frame", (0.15,0.15,0.16,1), 0.55, 0.3)
+    md  = make_solid_mat("SAT_Dish",  (0.85,0.85,0.86,1), 0.15, 0.4)
+
+    def cube(n, s, l):
+        bpy.ops.mesh.primitive_cube_add(size=1.0, location=l)
+        o = bpy.context.active_object; o.name = n; o.scale = s
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+        return o
+    def cyl(n, r, d, l, rot=(0,0,0)):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=r, depth=d, location=l, rotation=rot)
+        o = bpy.context.active_object; o.name = n
+        return o
+
+    b = cube("SB", (0.55,0.35,0.30), (0,0,0));       b.data.materials.append(mb); b.parent = root
+    cube("SN", (0.18,0.20,0.16), (0.55,0,0)).data.materials.append(mf); bpy.context.active_object.parent = root
+    cyl("SM", 0.02, 0.5, (0,0,0.42), (math.radians(90),0,0)).data.materials.append(mf); bpy.context.active_object.parent = root
+    cyl("SD", 0.20, 0.03, (0.72,0,0), (0,math.radians(90),0)).data.materials.append(md); bpy.context.active_object.parent = root
+    cube("AL", (0.45,0.03,0.03), (0,0.40,0)).data.materials.append(mf); bpy.context.active_object.parent = root
+    cube("AR", (0.45,0.03,0.03), (0,-0.40,0)).data.materials.append(mf); bpy.context.active_object.parent = root
+    cube("PL", (0.95,0.30,0.02), (0,0.90,0)).data.materials.append(mpn); bpy.context.active_object.parent = root
+    cube("PR", (0.95,0.30,0.02), (0,-0.90,0)).data.materials.append(mpn); bpy.context.active_object.parent = root
+
+    root.location = (orbit_r, 0, 0)
+    root.scale = (scale_factor,)*3
+    root.parent = pivot_obj
+    return root
+
+# ============================================================
+# DATA
+# ============================================================
+PLANET_DATA = [
+    ("Mercury", 0.11, 12,    88,    58,    0.03,  (0.6,0.5,0.45,1),   "Mercury.jpg"),
+    ("Venus",   0.28, 18,    225,   243,   177.4, (0.9,0.8,0.5,1),    "Venus.jpg"),
+    ("Earth",   0.30, 25,    365,   1,     23.4,  (0.2,0.5,0.9,1),    "Earth.jpg"),
+    ("Mars",    0.16, 34,    687,   1.03,  25.2,  (0.8,0.4,0.2,1),    "Mars.jpg"),
+    ("Jupiter", 3.36, 55,    4333,  0.41,  3.1,   (0.8,0.7,0.55,1),   "Jupiter.jpg"),
+    ("Saturn",  2.83, 80,    10759, 0.45,  26.7,  (0.9,0.85,0.6,1),   "Saturn.jpg"),
+    ("Uranus",  1.20, 105,   30688, 0.72,  97.8,  (0.5,0.85,0.9,1),   "Uranus.jpg"),
+    ("Neptune", 1.16, 125,   60182, 0.67,  28.3,  (0.2,0.4,0.9,1),    "Neptune.jpg"),
+    ("Pluto",   0.05, 150,   90560, 6.39,  122.5, (0.6,0.5,0.4,1),    "Pluto.jpg"),
+]
+
+SUN_RADIUS  = 8.0
+SPEED_SCALE = 1.5
+
+# ============================================================
+# BUILD SYSTEM
+# ============================================================
+def build_system():
+    planets = {}
+
+    print("  Sun...")
+    sun = add_globe("Sun", SUN_RADIUS)
+    assign_mat(sun, make_sun_mat())
+    sun.visible_shadow = False
+    sun.visible_transmission = False
+    sun.visible_volume_scatter = False
+    if hasattr(sun, "cycles_visibility"): sun.cycles_visibility.shadow = False
+
+    corona = add_globe("Sun_Corona", SUN_RADIUS * 1.15, segments=64, rings=32)
+    assign_mat(corona, make_corona_mat())
+    corona.visible_shadow = False
+    corona.visible_transmission = False
+    corona.visible_volume_scatter = False
+    if hasattr(corona, "cycles_visibility"): corona.cycles_visibility.shadow = False
+
+    # ── LIGHTING ─────────────────────────────────────────
+    # Main point light – shadows, central glow
+    sl = add_light("SunLight", (0,0,0), 120000, SUN_RADIUS, (1.0,0.96,0.90), light_type='POINT')
+    sl.data.use_custom_distance = True; sl.data.cutoff_distance = 800.0
+
+    # KEY FIX: SUN-type light – NO distance falloff at all
+    # This guarantees Uranus, Neptune, Pluto are fully lit
+    sun_fill = add_light("SunFill_Uniform", (0,0,0), 8.0, 1.0, (1.0,0.97,0.90), use_shadow=False, light_type='SUN')
+    if hasattr(sun_fill.data, "angle"):
+        sun_fill.data.angle = 0.05
+
+    # Second SUN light from slightly different angle for depth
+    sun_fill2 = add_light("SunFill_Side", (0,0,0), 3.0, 1.0, (0.7,0.8,1.0), use_shadow=False, light_type='SUN')
+    sun_fill2.rotation_euler = (math.radians(30), math.radians(45), 0)
+
+    # Extra point fill from above
+    add_light("SunFill_Top", (0,0,80), 20000, SUN_RADIUS*3, (0.7,0.80,1.0), use_shadow=False, light_type='POINT')
+
+    # Rim light
+    add_light("SunRim", (0,120,-30), 12000, SUN_RADIUS*4, (0.5,0.6,0.9), use_shadow=False, light_type='POINT')
+
+    # ── Planets ──────────────────────────────────────────
+    for (pname, prad, orbit_r, orb_p, rot_p, tilt, fallback, tex_file) in PLANET_DATA:
+        print(f"  {pname} (texture: {tex_file})...")
+        pivot = add_anchor(f"{pname}_Pivot")
+        planet = add_globe(pname, prad, location=(orbit_r, 0, 0))
+        planet.parent = pivot
+        planet.rotation_euler.x = math.radians(tilt)
+        mat = make_planet_mat(f"{pname}_Mat", tex_file, roughness=0.85, fallback=fallback)
+        assign_mat(planet, mat)
+        planets[pname] = {"pivot": pivot, "planet": planet, "orbit_r": orbit_r, "radius": prad, "base_color": fallback}
+
+    # ── Saturn ring ──────────────────────────────────────
+    sr = planets["Saturn"]["radius"]
+    ring = add_flat_ring("Saturn_Ring", sr * 2.2)
+    ring.parent = planets["Saturn"]["planet"]
+    assign_mat(ring, make_ring_mat())
+
+    # ── Moon ─────────────────────────────────────────────
+    print("  Moon (texture: Moon.jpg)...")
+    eo = planets["Earth"]["planet"]; er = planets["Earth"]["radius"]
+    mpv = add_anchor("Moon_Pivot"); mpv.parent = eo
+    moon = add_globe("Moon", er*0.42, location=(er*4.2, 0, 0))
+    moon.parent = mpv
+    assign_mat(moon, make_planet_mat("Moon_Mat", "Moon.jpg", 0.9, (0.75,0.75,0.78,1)))
+    mpv.rotation_euler = (0,0,0); mpv.keyframe_insert(data_path="rotation_euler", frame=1)
+    mpv.rotation_euler.z = math.radians(360*13); mpv.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+    set_interp(mpv, 'LINEAR')
+
+    # ── Satellite ────────────────────────────────────────
+    sp = add_anchor("Satellite_Pivot"); sp.parent = eo
+    sp.rotation_euler = (math.radians(28), 0, 0)
+    sb = build_satellite(er*1.6, sp, er*0.25)
+    sp.rotation_euler = (math.radians(28), 0, 0)
+    sp.keyframe_insert(data_path="rotation_euler", frame=1)
+    sp.rotation_euler = (math.radians(28), 0, math.radians(360*12))
+    sp.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+    set_interp(sp, 'LINEAR')
+    sb.rotation_euler = (0,0,0); sb.keyframe_insert(data_path="rotation_euler", frame=1)
+    sb.rotation_euler.y = math.radians(360*3); sb.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+    set_interp(sb, 'LINEAR')
+
+    try:
+        bpy.ops.object.lightprobe_add(type='GRID', location=(0,0,0))
+        p = bpy.context.active_object; p.name = "IrradianceVolume"
+        p.scale = (180,180,40)
+        p.data.grid_resolution_x = 4; p.data.grid_resolution_y = 4; p.data.grid_resolution_z = 2
+        p.data.influence_distance = 200
+    except: pass
+
+    return planets
+
+# ============================================================
+# ORBIT LINES
+# ============================================================
+def render_orbits():
+    mat = bpy.data.materials.new("Orbit_Mat")
+    mat.use_nodes = True
+    n = mat.node_tree.nodes; l = mat.node_tree.links; n.clear()
+    out = n.new("ShaderNodeOutputMaterial")
+    em  = n.new("ShaderNodeEmission")
+    tr  = n.new("ShaderNodeBsdfTransparent")
+    mx  = n.new("ShaderNodeMixShader")
+    em.inputs["Color"].default_value = (0.55,0.75,1.0,1.0)
+    em.inputs["Strength"].default_value = 0.3
+    mx.inputs[0].default_value = 0.85
+    l.new(tr.outputs["BSDF"], mx.inputs[1])
+    l.new(em.outputs["Emission"], mx.inputs[2])
+    l.new(mx.outputs["Shader"], out.inputs["Surface"])
+    mat.blend_method = "BLEND"
+    if hasattr(mat, "shadow_method"): mat.shadow_method = "NONE"
+
+    segs = 256
+    for row in PLANET_DATA:
+        pname, orbit_r = row[0], row[2]
+        cd = bpy.data.curves.new(f"Orbit_{pname}", 'CURVE')
+        cd.dimensions = '3D'; cd.bevel_depth = 0.015; cd.use_fill_caps = True
+        sp = cd.splines.new('POLY'); sp.use_cyclic_u = True; sp.points.add(segs-1)
+        for i, pt in enumerate(sp.points):
+            a = (2*math.pi*i)/segs
+            pt.co = (orbit_r*math.cos(a), orbit_r*math.sin(a), 0, 1)
+        ob = bpy.data.objects.new(f"Orbit_{pname}", cd)
+        bpy.context.collection.objects.link(ob)
+        ob.data.materials.append(mat)
+
+# ============================================================
+# ASTEROIDS
+# ============================================================
+def place_asteroids():
+    root = add_anchor("AsteroidField")
+    mat = make_planet_mat("Asteroid_Mat", "Asteroid.jpg", 0.95, (0.35,0.33,0.30,1))
+    for i in range(80):
+        bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=0.7)
+        a = bpy.context.active_object; a.name = f"Ast_{i:02d}"
+        a.scale = (random.uniform(0.6,2.0), random.uniform(0.6,2.0), random.uniform(0.5,1.8))
+        ang = random.uniform(0, 2*math.pi)
+        dist = random.uniform(20.0, 170.0)
+        a.location = (dist*math.cos(ang), dist*math.sin(ang), random.uniform(-25, 25))
+        assign_mat(a, mat); a.parent = root
+
+# ============================================================
+# MOTION
+# ============================================================
+def animate(planets):
+    for row in PLANET_DATA:
+        pname, orb_p, tilt = row[0], row[3], row[5]
+        pv = planets[pname]["pivot"]; pl = planets[pname]["planet"]
+        dpf = 360.0 / (orb_p / SPEED_SCALE)
+        pv.rotation_euler = (0,0,0); pv.keyframe_insert(data_path="rotation_euler", frame=1)
+        pv.rotation_euler.z = math.radians(dpf * FRAME_END)
+        pv.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+        set_interp(pv, 'LINEAR')
+        pl.rotation_euler = (math.radians(tilt), 0, 0)
+        pl.keyframe_insert(data_path="rotation_euler", frame=1)
+        pl.rotation_euler = (math.radians(tilt), 0, math.radians(0.5*FRAME_END))
+        pl.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+        set_interp(pl, 'LINEAR')
+
+# ============================================================
+# LABELS
+# ============================================================
+def add_labels(planets, cam, blocks):
+    fp = tex("SpaceGrotesk-VariableFont_wght.ttf")
+    label_nodes = {}
+    for row in PLANET_DATA:
+        pname, prad, orbit_r = row[0], row[1], row[2]
+        pv = planets[pname]["pivot"]
+        lp = prad * 2.5 if pname == "Saturn" else prad
+        rig = add_anchor(f"LR_{pname}", (orbit_r, 0, 0)); rig.parent = pv
+        t = rig.constraints.new(type='TRACK_TO')
+        t.target = cam; t.track_axis = 'TRACK_Z'; t.up_axis = 'UP_Y'
+        bpy.ops.object.text_add(location=(0,0,0))
+        txt = bpy.context.active_object; txt.parent = rig
+        txt.data.body = pname.upper(); txt.data.size = lp*0.35; txt.data.align_x = 'LEFT'
+        txt.location = (lp*1.3, lp*0.2, 0)
+        if os.path.exists(fp):
+            try: txt.data.font = bpy.data.fonts.load(fp)
+            except: pass
+        m = bpy.data.materials.new(f"Lbl_{pname}")
+        m.use_nodes = True; m.blend_method = 'BLEND'
+        n = m.node_tree.nodes; l = m.node_tree.links; n.clear()
+        o = n.new("ShaderNodeOutputMaterial")
+        em = n.new("ShaderNodeEmission"); tr = n.new("ShaderNodeBsdfTransparent")
+        mx = n.new("ShaderNodeMixShader")
+        em.inputs["Color"].default_value = (1,1,1,1); em.inputs["Strength"].default_value = 5.0
+        mx.inputs[0].default_value = 0.0
+        l.new(tr.outputs["BSDF"], mx.inputs[1]); l.new(em.outputs["Emission"], mx.inputs[2])
+        l.new(mx.outputs["Shader"], o.inputs["Surface"])
+        txt.data.materials.append(m); label_nodes[pname] = mx
+    for (pname, bs, be) in blocks:
+        mx = label_nodes[pname]
+        mx.inputs[0].default_value = 0.0
+        mx.inputs[0].keyframe_insert(data_path="default_value", frame=1)
+        mx.inputs[0].keyframe_insert(data_path="default_value", frame=bs+5)
+        mx.inputs[0].default_value = 1.0
+        mx.inputs[0].keyframe_insert(data_path="default_value", frame=bs+20)
+        mx.inputs[0].keyframe_insert(data_path="default_value", frame=be-20)
+        mx.inputs[0].default_value = 0.0
+        mx.inputs[0].keyframe_insert(data_path="default_value", frame=be-2)
+
+# ============================================================
+# CAMERA
+# ============================================================
+def setup_camera(planets):
+    cf = add_anchor("CameraFocus"); cr = add_anchor("CameraRig")
+    bpy.ops.object.camera_add(location=(0,-150,40))
+    cam = bpy.context.active_object; cam.name = "MainCamera"
+    bpy.context.scene.camera = cam; cam.parent = cr
+    cam.data.dof.use_dof = True
+    cam.data.dof.focus_object = bpy.data.objects.get("CameraFocus")
+    cam.data.dof.aperture_fstop = 2.8; cam.data.dof.aperture_blades = 6
+    cam.data.lens = 50
+    t = cam.constraints.new(type='TRACK_TO')
+    t.target = cf; t.track_axis = 'TRACK_NEGATIVE_Z'; t.up_axis = 'UP_Y'
+
+    targets = {"Sun": bpy.data.objects.get("Sun")}
+    for row in PLANET_DATA: targets[row[0]] = planets[row[0]]["planet"]
+    for k, tgt in targets.items():
+        c1 = cr.constraints.new(type='COPY_LOCATION'); c1.name = f"L_{k}"; c1.target = tgt; c1.influence = 0
+        c2 = cf.constraints.new(type='COPY_LOCATION'); c2.name = f"L_{k}"; c2.target = tgt; c2.influence = 0
+
+    def lock(n, f, v):
+        for o in (cr, cf):
+            c = o.constraints.get(f"L_{n}"); c.influence = v
+            c.keyframe_insert(data_path="influence", frame=f)
+
+    lock("Sun",1,1); lock("Sun",200,1)
+    for row in PLANET_DATA: lock(row[0],1,0); lock(row[0],200,0)
+    cam.location = (0,-150,40); cam.keyframe_insert(data_path="location", frame=1)
+    cam.location = (40,-130,30); cam.keyframe_insert(data_path="location", frame=200)
+
+    seq = [r[0] for r in PLANET_DATA]; blk = 1000//len(seq); blocks = []; prev = "Sun"
+    for i, pn in enumerate(seq):
+        bs = 200+i*blk; be = 200+(i+1)*blk if i<len(seq)-1 else 1200
+        blocks.append((pn, bs, be))
+        lock(prev,bs,1); lock(prev,bs+1,0); lock(pn,bs,0); lock(pn,bs+16,1); lock(pn,be,1)
+        r = planets[pn]["radius"]; d = max(r*14,0.8); h = max(r*2,0.2)
+        q = bs+int((be-bs)*0.5)
+        cam.location = (d,-d,h); cam.keyframe_insert(data_path="location", frame=bs+10)
+        cam.location = (d*1.2,0,h); cam.keyframe_insert(data_path="location", frame=q)
+        cam.location = (d,d,h); cam.keyframe_insert(data_path="location", frame=be)
+        cam.data.dof.aperture_fstop = 1.8 if r>1 else 3.5
+        cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=bs+10)
+        cam.data.dof.aperture_fstop = 2.4
+        cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=be)
+        prev = pn
+
+    lock(prev,1200,1); lock(prev,1201,0)
+    lock("Sun",1200,0); lock("Sun",1240,1); lock("Sun",1400,1)
+    cam.location = (80,-80,30); cam.keyframe_insert(data_path="location", frame=1200)
+    cam.location = (0,-60,20); cam.keyframe_insert(data_path="location", frame=1400)
+    lock("Sun",1500,1)
+    cam.location = (0,-60,20); cam.keyframe_insert(data_path="location", frame=1400)
+    cam.location = (0,-250,60); cam.keyframe_insert(data_path="location", frame=1500)
+    cam.data.dof.aperture_fstop = 5.6; cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=1400)
+    cam.data.dof.aperture_fstop = 8.0; cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=1500)
+    set_interp(cr,'BEZIER'); set_interp(cf,'BEZIER'); set_interp(cam,'BEZIER')
+    return cam, blocks
+
+# ============================================================
+# COMPOSITING (safe)
+# ============================================================
+def compositing():
+    try:
+        sc = bpy.context.scene
+        if not hasattr(sc, "use_nodes"): return
+        sc.use_nodes = True
+        tree = getattr(sc, "node_tree", None)
+        if not tree: return
+        n = tree.nodes; l = tree.links; n.clear()
+        rl = n.new("CompositorNodeRLayers"); rl.location = (-600,300)
+        out = n.new("CompositorNodeComposite"); out.location = (800,300)
+        vw = n.new("CompositorNodeViewer"); vw.location = (800,50)
+        gl = n.new("CompositorNodeGlare"); gl.location = (-200,300)
+        gl.glare_type='FOG_GLOW'; gl.quality='HIGH'; gl.threshold=2.0; gl.size=6
+        if hasattr(gl,"mix"): gl.mix=0
+        cb = n.new("CompositorNodeColorBalance"); cb.location = (200,300)
+        cb.correction_method='LIFT_GAMMA_GAIN'
+        cb.lift=(0.97,0.97,1.02); cb.gamma=(1,1,1); cb.gain=(1.02,1,0.98)
+        ld = n.new("CompositorNodeLensdist"); ld.location = (450,300)
+        ld.inputs["Distort"].default_value=0; ld.inputs["Dispersion"].default_value=0.005
+        ve = n.new("CompositorNodeEllipseMask"); ve.location=(0,-100); ve.width=0.85; ve.height=0.85
+        vb = n.new("CompositorNodeBlur"); vb.location=(200,-100); vb.size_x=180; vb.size_y=180
+        vm = n.new("CompositorNodeMixRGB"); vm.location=(600,300)
+        vm.blend_type='MULTIPLY'; vm.inputs[0].default_value=0.35
+        l.new(rl.outputs["Image"],gl.inputs["Image"])
+        l.new(gl.outputs["Image"],cb.inputs["Image"])
+        l.new(cb.outputs["Image"],ld.inputs["Image"])
+        l.new(ld.outputs["Image"],vm.inputs[1])
+        l.new(ve.outputs["Mask"],vb.inputs["Image"])
+        l.new(vb.outputs["Image"],vm.inputs[2])
+        l.new(vm.outputs["Image"],out.inputs["Image"])
+        l.new(vm.outputs["Image"],vw.inputs["Image"])
+    except Exception as e:
+        print(f"  Compositing skipped: {e}")
+
+# ============================================================
+# MAIN
+# ============================================================
+def launch():
+    print("="*60)
+    print("[1/7] Environment..."); build_environment()
+    print("[2/7] Solar system..."); planets = build_system()
+    print("[3/7] Orbits..."); render_orbits()
+    print("[4/7] Asteroids..."); place_asteroids()
+    print("[5/7] Animation..."); animate(planets)
+    print("[6/7] Camera..."); cam, blocks = setup_camera(planets)
+    print("[6b] Labels..."); add_labels(planets, cam, blocks)
+    print("[7/7] Compositing..."); compositing()
+    bpy.context.scene.frame_set(1)
+    bpy.context.view_layer.update()
+    print("="*60)
+    print("  DONE – Z > Rendered to preview")
+    print("  SPACE to play animation")
+    print("="*60)
+
+launch()</code></pre>
                             </div>
                         </div>
                     </div>
