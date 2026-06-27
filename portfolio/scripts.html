@@ -1506,32 +1506,29 @@ import random
 # ============================================================
 # CONFIGURATION
 # ============================================================
-TEXTURE_DIR = r&quot;D:\Texture\Blender Textures&quot;
-
+TEXTURE_DIR = r&quot;D:\MultimediaPortfolio\planets jpg&quot;
 RENDER_ENGINE = &quot;BLENDER_EEVEE&quot;
-RESOLUTION_X  = 1920
-RESOLUTION_Y  = 1080
-FRAME_START    = 1
-FRAME_END      = 1500
-USE_BLOOM      = True
+RESOLUTION_X = 1920
+RESOLUTION_Y = 1080
+FRAME_START = 1
+FRAME_END = 1500
+USE_BLOOM = True
+
+# Planet visibility — shadow-side fill so surfaces stay readable in space
+PLANET_BRIGHTNESS_BOOST = 4.0
+PLANET_AMBIENT_FLOOR = (0.32, 0.32, 0.35, 1.0)
+PLANET_EMISSION_STRENGTH = 1.8
+SCENE_EXPOSURE = 0.75
+SUN_POINT_ENERGY = 100000.0
 
 # ============================================================
 # UTILITIES
 # ============================================================
-def tex(filename):
+def resolve_asset_path(filename):
     return os.path.join(TEXTURE_DIR, filename)
 
-def load_img(filepath):
-    if not filepath or not os.path.exists(filepath):
-        print(f&quot;  âœ— Missing: {filepath}&quot;)
-        return None
-    try:
-        img = bpy.data.images.load(filepath)
-        print(f&quot;  âœ“ Loaded: {os.path.basename(filepath)}&quot;)
-        return img
-    except Exception as e:
-        print(f&quot;  âœ— Error: {e}&quot;)
-        return None
+def fetch_surface_map(pname):
+    return resolve_asset_path(f&quot;{pname}.jpg&quot;)
 
 def set_interp(obj, mode=&#x27;LINEAR&#x27;):
     ad = getattr(obj, &quot;animation_data&quot;, None)
@@ -1557,48 +1554,33 @@ def build_environment():
 
     scene = bpy.context.scene
     scene.frame_start = FRAME_START
-    scene.frame_end   = FRAME_END
-    scene.render.engine        = RENDER_ENGINE
-    scene.render.resolution_x  = RESOLUTION_X
-    scene.render.resolution_y  = RESOLUTION_Y
+    scene.frame_end = FRAME_END
+    scene.render.engine = RENDER_ENGINE
+    scene.render.resolution_x = RESOLUTION_X
+    scene.render.resolution_y = RESOLUTION_Y
+
     scene.render.film_transparent = False
 
-    scene.view_settings.view_transform = &#x27;Filmic&#x27;
-    scene.view_settings.exposure       = 0.0
-    scene.view_settings.gamma          = 1.0
-    scene.view_settings.look           = &#x27;Medium High Contrast&#x27;
+    # Standard transform ensures the colors match your raw JPGs precisely.
+    try:
+        scene.view_settings.view_transform = &#x27;Standard&#x27;
+        scene.view_settings.look = &#x27;None&#x27;
+        scene.view_settings.exposure = SCENE_EXPOSURE
+    except Exception:
+        pass
 
     if scene.render.engine == &quot;BLENDER_EEVEE&quot;:
         eevee = scene.eevee
+        if hasattr(eevee, &quot;use_gtao&quot;): eevee.use_gtao = False
         if hasattr(eevee, &quot;use_bloom&quot;):
             eevee.use_bloom = USE_BLOOM
-            if hasattr(eevee, &quot;bloom_intensity&quot;):  eevee.bloom_intensity = 0.3
-            if hasattr(eevee, &quot;bloom_threshold&quot;):  eevee.bloom_threshold = 2.0
-            if hasattr(eevee, &quot;bloom_radius&quot;):     eevee.bloom_radius = 6.0
-            if hasattr(eevee, &quot;bloom_clamp&quot;):      eevee.bloom_clamp = 5.0
-            if hasattr(eevee, &quot;bloom_knee&quot;):       eevee.bloom_knee = 0.5
-        if hasattr(eevee, &quot;use_ssr&quot;):
-            eevee.use_ssr = True
-            if hasattr(eevee, &quot;use_ssr_halfres&quot;):  eevee.use_ssr_halfres = False
-        if hasattr(eevee, &quot;use_soft_shadows&quot;):     eevee.use_soft_shadows = True
-        if hasattr(eevee, &quot;shadow_cube_size&quot;):     eevee.shadow_cube_size = &#x27;2048&#x27;
-        if hasattr(eevee, &quot;shadow_cascade_size&quot;):  eevee.shadow_cascade_size = &#x27;2048&#x27;
-        if hasattr(eevee, &quot;taa_render_samples&quot;):   eevee.taa_render_samples = 128
-        if hasattr(eevee, &quot;taa_samples&quot;):          eevee.taa_samples = 32
-        if hasattr(eevee, &quot;use_gtao&quot;):
-            eevee.use_gtao = True
-            if hasattr(eevee, &quot;gtao_distance&quot;): eevee.gtao_distance = 1.5
-            if hasattr(eevee, &quot;gtao_factor&quot;):   eevee.gtao_factor = 0.8
-        # Volumetrics: very low density so it doesn&#x27;t eat light at long range
-        if hasattr(eevee, &quot;use_volumetric_lights&quot;):    eevee.use_volumetric_lights = True
-        if hasattr(eevee, &quot;volumetric_start&quot;):         eevee.volumetric_start = 0.1
-        if hasattr(eevee, &quot;volumetric_end&quot;):           eevee.volumetric_end = 350.0
-        if hasattr(eevee, &quot;volumetric_tile_size&quot;):     eevee.volumetric_tile_size = &#x27;8&#x27;
-        if hasattr(eevee, &quot;volumetric_samples&quot;):       eevee.volumetric_samples = 64
-        if hasattr(eevee, &quot;use_volumetric_shadows&quot;):   eevee.use_volumetric_shadows = False
-        if hasattr(eevee, &quot;use_overscan&quot;):
-            eevee.use_overscan = True
-            if hasattr(eevee, &quot;overscan_size&quot;): eevee.overscan_size = 10.0
+            if hasattr(eevee, &quot;bloom_intensity&quot;): eevee.bloom_intensity = 0.8
+            if hasattr(eevee, &quot;bloom_threshold&quot;): eevee.bloom_threshold = 0.5
+            if hasattr(eevee, &quot;bloom_radius&quot;): eevee.bloom_radius = 8.0
+        if hasattr(eevee, &quot;use_ssr&quot;): eevee.use_ssr = False
+        if hasattr(eevee, &quot;use_soft_shadows&quot;): eevee.use_soft_shadows = True
+        if hasattr(eevee, &quot;shadow_cube_size&quot;): eevee.shadow_cube_size = &#x27;1024&#x27;
+        if hasattr(eevee, &quot;taa_render_samples&quot;): eevee.taa_render_samples = 64
 
     world = bpy.data.worlds.new(&quot;World&quot;)
     scene.world = world
@@ -1606,154 +1588,294 @@ def build_environment():
     wnt = world.node_tree
     wnt.nodes.clear()
 
-    bg  = wnt.nodes.new(&quot;ShaderNodeBackground&quot;)
+    bg = wnt.nodes.new(&quot;ShaderNodeBackground&quot;)
+    bg.inputs[&quot;Color&quot;].default_value = (0.0, 0.0, 0.0, 1.0)  # Plain black
+    bg.inputs[&quot;Strength&quot;].default_value = 1.0
     out = wnt.nodes.new(&quot;ShaderNodeOutputWorld&quot;)
-    bg.location  = (100, 300)
-    out.location = (400, 300)
-
-    # Very thin volumetric â€“ just enough for subtle god rays, not enough to darken outer planets
-    vol = wnt.nodes.new(&quot;ShaderNodeVolumePrincipled&quot;)
-    vol.location = (100, 0)
-    vol.inputs[&quot;Density&quot;].default_value    = 0.00003
-    vol.inputs[&quot;Anisotropy&quot;].default_value = 0.6
-    if &quot;Color&quot; in vol.inputs:
-        vol.inputs[&quot;Color&quot;].default_value = (1.0, 0.97, 0.92, 1.0)
-
-    star_img = load_img(tex(&quot;Stars.jpg&quot;))
-    if star_img:
-        tc  = wnt.nodes.new(&quot;ShaderNodeTexCoord&quot;);        tc.location  = (-800, 300)
-        mp  = wnt.nodes.new(&quot;ShaderNodeMapping&quot;);         mp.location  = (-600, 300)
-        env = wnt.nodes.new(&quot;ShaderNodeTexEnvironment&quot;);  env.location = (-380, 300)
-        env.image = star_img
-        wnt.links.new(tc.outputs[&quot;Generated&quot;], mp.inputs[&quot;Vector&quot;])
-        wnt.links.new(mp.outputs[&quot;Vector&quot;],    env.inputs[&quot;Vector&quot;])
-        wnt.links.new(env.outputs[&quot;Color&quot;],    bg.inputs[&quot;Color&quot;])
-    else:
-        bg.inputs[&quot;Color&quot;].default_value = (0.0, 0.0, 0.01, 1.0)
-
-    bg.inputs[&quot;Strength&quot;].default_value = 0.5
+    out.location = (320, 0)
     wnt.links.new(bg.outputs[&quot;Background&quot;], out.inputs[&quot;Surface&quot;])
-    wnt.links.new(vol.outputs[&quot;Volume&quot;],    out.inputs[&quot;Volume&quot;])
 
 # ============================================================
-# MATERIALS
+# MATERIALS (DYNAMIC DISTANCE COMPENSATION)
 # ============================================================
-def make_planet_mat(name, texture_file, roughness=0.85, fallback=(0.5,0.5,0.5,1)):
+def build_distance_compensated_mask(nodes, links, s2rgb_node, point_light_energy=SUN_POINT_ENERGY):
+    # Get exact distance of the planet from the Sun
+    obj_info = nodes.new(&quot;ShaderNodeObjectInfo&quot;)
+    obj_info.location = (-600, 500)
+
+    vec_len = nodes.new(&quot;ShaderNodeVectorMath&quot;)
+    vec_len.operation = &#x27;LENGTH&#x27;
+    vec_len.location = (-400, 500)
+    links.new(obj_info.outputs[&quot;Location&quot;], vec_len.inputs[0])
+
+    # Distance Squared
+    math_sq = nodes.new(&quot;ShaderNodeMath&quot;)
+    math_sq.operation = &#x27;MULTIPLY&#x27;
+    math_sq.location = (-200, 500)
+    links.new(vec_len.outputs[&quot;Value&quot;], math_sq.inputs[0])
+    links.new(vec_len.outputs[&quot;Value&quot;], math_sq.inputs[1])
+
+    # The fixed math formula (incorporating Pi^2) to make the mask reach exactly 1.0 brightness,
+    # multiplied by our artistic Brightness Boost.
+    factor = (4.0 * (math.pi ** 2) * PLANET_BRIGHTNESS_BOOST) / point_light_energy
+
+    math_fac = nodes.new(&quot;ShaderNodeMath&quot;)
+    math_fac.operation = &#x27;MULTIPLY&#x27;
+    math_fac.location = (0, 500)
+    math_fac.inputs[1].default_value = factor
+    links.new(math_sq.outputs[&quot;Value&quot;], math_fac.inputs[0])
+
+    # Multiply the shadow mask by our calculated distance factor
+    mix_scale = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    mix_scale.blend_type = &#x27;MULTIPLY&#x27;
+    mix_scale.inputs[&quot;Fac&quot;].default_value = 1.0
+    mix_scale.location = (400, 500)
+    links.new(s2rgb_node.outputs[&quot;Color&quot;], mix_scale.inputs[&quot;Color1&quot;])
+    links.new(math_fac.outputs[&quot;Value&quot;], mix_scale.inputs[&quot;Color2&quot;])
+
+    # Add ambient fill so the dark side isn&#x27;t pitch black
+    mix_add = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    mix_add.blend_type = &#x27;ADD&#x27;
+    mix_add.inputs[&quot;Fac&quot;].default_value = 1.0
+    mix_add.inputs[&quot;Color2&quot;].default_value = PLANET_AMBIENT_FLOOR
+    mix_add.location = (600, 500)
+    links.new(mix_scale.outputs[&quot;Color&quot;], mix_add.inputs[&quot;Color1&quot;])
+
+    # Clamp shadow-side brightness to a readable minimum
+    mask_floor = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    mask_floor.blend_type = &#x27;LIGHTEN&#x27;
+    mask_floor.inputs[&quot;Fac&quot;].default_value = 1.0
+    mask_floor.inputs[&quot;Color2&quot;].default_value = PLANET_AMBIENT_FLOOR
+    mask_floor.location = (800, 500)
+    links.new(mix_add.outputs[&quot;Color&quot;], mask_floor.inputs[&quot;Color1&quot;])
+
+    return mask_floor
+
+def blend_lit_with_base_texture(nodes, links, mask_out, base_color_out, lit_color_out, location=(950, 0)):
+    &quot;&quot;&quot;On the dark side, show more of the raw texture; on the lit side, use the light mask.&quot;&quot;&quot;
+    mask_lum = nodes.new(&quot;ShaderNodeRGBToBW&quot;)
+    mask_lum.location = (location[0] - 150, location[1] + 120)
+    links.new(mask_out.outputs[&quot;Color&quot;], mask_lum.inputs[&quot;Color&quot;])
+
+    visibility = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    visibility.blend_type = &#x27;MIX&#x27;
+    visibility.location = location
+    links.new(base_color_out, visibility.inputs[&quot;Color1&quot;])
+    links.new(lit_color_out, visibility.inputs[&quot;Color2&quot;])
+    links.new(mask_lum.outputs[&quot;Val&quot;], visibility.inputs[&quot;Fac&quot;])
+    return visibility
+
+def make_surface_shader(name, texture_path, roughness=0.85, metallic=0.0, fallback_color=(0.5,0.5,0.5,1)):
     mat = bpy.data.materials.new(name=name)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     nodes.clear()
 
-    out  = nodes.new(&quot;ShaderNodeOutputMaterial&quot;);  out.location  = (600, 0)
-    bsdf = nodes.new(&quot;ShaderNodeBsdfPrincipled&quot;);  bsdf.location = (300, 0)
-    bsdf.inputs[&quot;Roughness&quot;].default_value = roughness
+    out = nodes.new(&quot;ShaderNodeOutputMaterial&quot;)
+    out.location = (1200, 0)
 
-    coord = nodes.new(&quot;ShaderNodeTexCoord&quot;);  coord.location = (-600, 0)
-    mp    = nodes.new(&quot;ShaderNodeMapping&quot;);   mp.location    = (-400, 0)
-    img   = nodes.new(&quot;ShaderNodeTexImage&quot;);  img.location   = (-180, 0)
+    diffuse = nodes.new(&quot;ShaderNodeBsdfPrincipled&quot;)
+    diffuse.location = (0, 300)
+    diffuse.inputs[&quot;Base Color&quot;].default_value = (1.0, 1.0, 1.0, 1.0)
+    diffuse.inputs[&quot;Roughness&quot;].default_value = roughness
+    diffuse.inputs[&quot;Metallic&quot;].default_value = metallic
 
-    links.new(coord.outputs[&quot;UV&quot;],    mp.inputs[&quot;Vector&quot;])
-    links.new(mp.outputs[&quot;Vector&quot;],   img.inputs[&quot;Vector&quot;])
+    s2rgb = nodes.new(&quot;ShaderNodeShaderToRGB&quot;)
+    s2rgb.location = (200, 300)
+    links.new(diffuse.outputs[&quot;BSDF&quot;], s2rgb.inputs[&quot;Shader&quot;])
 
-    loaded = load_img(tex(texture_file))
+    mask_out = build_distance_compensated_mask(nodes, links, s2rgb, point_light_energy=SUN_POINT_ENERGY)
+
+    tex_mul = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    tex_mul.blend_type = &#x27;MULTIPLY&#x27;
+    tex_mul.inputs[&quot;Fac&quot;].default_value = 1.0
+    tex_mul.location = (800, 0)
+    links.new(mask_out.outputs[&quot;Color&quot;], tex_mul.inputs[&quot;Color2&quot;])
+
+    coord = nodes.new(&quot;ShaderNodeTexCoord&quot;)
+    mapping = nodes.new(&quot;ShaderNodeMapping&quot;)
+    img = nodes.new(&quot;ShaderNodeTexImage&quot;)
+
+    coord.location = (-400, 0)
+    mapping.location = (-200, 0)
+    img.location = (0, 0)
+
+    links.new(coord.outputs[&quot;UV&quot;], mapping.inputs[&quot;Vector&quot;])
+    links.new(mapping.outputs[&quot;Vector&quot;], img.inputs[&quot;Vector&quot;])
+
+    loaded = False
+    if texture_path and os.path.exists(texture_path):
+        try:
+            img.image = bpy.data.images.load(texture_path, check_existing=True)
+            loaded = True
+        except Exception:
+            pass
+
     if loaded:
-        img.image = loaded
-        links.new(img.outputs[&quot;Color&quot;], bsdf.inputs[&quot;Base Color&quot;])
+        base_color = img.outputs[&quot;Color&quot;]
+        links.new(base_color, tex_mul.inputs[&quot;Color1&quot;])
     else:
-        bsdf.inputs[&quot;Base Color&quot;].default_value = fallback
+        base_rgb = nodes.new(&quot;ShaderNodeRGB&quot;)
+        base_rgb.location = (0, -180)
+        base_rgb.outputs[0].default_value = fallback_color
+        base_color = base_rgb.outputs[&quot;Color&quot;]
+        links.new(base_color, tex_mul.inputs[&quot;Color1&quot;])
 
-    links.new(bsdf.outputs[&quot;BSDF&quot;], out.inputs[&quot;Surface&quot;])
+    final_color = blend_lit_with_base_texture(
+        nodes, links, mask_out, base_color, tex_mul.outputs[&quot;Color&quot;]
+    )
+
+    emission = nodes.new(&quot;ShaderNodeEmission&quot;)
+    emission.location = (1000, 0)
+    emission.inputs[&quot;Strength&quot;].default_value = PLANET_EMISSION_STRENGTH
+    links.new(final_color.outputs[&quot;Color&quot;], emission.inputs[&quot;Color&quot;])
+    links.new(emission.outputs[&quot;Emission&quot;], out.inputs[&quot;Surface&quot;])
+
     return mat
 
-
-def make_sun_mat():
-    mat = bpy.data.materials.new(name=&quot;Sun_Mat&quot;)
+def make_solid_mat(name, color=(0.8, 0.8, 0.8, 1.0), metallic=0.0, roughness=0.5):
+    mat = bpy.data.materials.new(name=name)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     nodes.clear()
 
-    out  = nodes.new(&quot;ShaderNodeOutputMaterial&quot;); out.location  = (600, 0)
-    emit = nodes.new(&quot;ShaderNodeEmission&quot;);       emit.location = (300, 0)
-    emit.inputs[&quot;Strength&quot;].default_value = 2.5
+    out = nodes.new(&quot;ShaderNodeOutputMaterial&quot;)
+    out.location = (1200, 0)
 
-    coord = nodes.new(&quot;ShaderNodeTexCoord&quot;); coord.location = (-600, 0)
-    mp    = nodes.new(&quot;ShaderNodeMapping&quot;);  mp.location    = (-400, 0)
-    img   = nodes.new(&quot;ShaderNodeTexImage&quot;); img.location   = (-180, 0)
+    diffuse = nodes.new(&quot;ShaderNodeBsdfPrincipled&quot;)
+    diffuse.location = (0, 300)
+    diffuse.inputs[&quot;Base Color&quot;].default_value = (1.0, 1.0, 1.0, 1.0)
+    diffuse.inputs[&quot;Roughness&quot;].default_value = roughness
+    diffuse.inputs[&quot;Metallic&quot;].default_value = metallic
 
-    links.new(coord.outputs[&quot;UV&quot;],  mp.inputs[&quot;Vector&quot;])
-    links.new(mp.outputs[&quot;Vector&quot;], img.inputs[&quot;Vector&quot;])
+    s2rgb = nodes.new(&quot;ShaderNodeShaderToRGB&quot;)
+    s2rgb.location = (200, 300)
+    links.new(diffuse.outputs[&quot;BSDF&quot;], s2rgb.inputs[&quot;Shader&quot;])
 
-    loaded = load_img(tex(&quot;Sun.jpg&quot;))
-    if loaded:
-        img.image = loaded
-        links.new(img.outputs[&quot;Color&quot;], emit.inputs[&quot;Color&quot;])
+    mask_out = build_distance_compensated_mask(nodes, links, s2rgb, point_light_energy=SUN_POINT_ENERGY)
+
+    tex_mul = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    tex_mul.blend_type = &#x27;MULTIPLY&#x27;
+    tex_mul.inputs[&quot;Fac&quot;].default_value = 1.0
+    tex_mul.inputs[&quot;Color1&quot;].default_value = color
+    tex_mul.location = (800, 0)
+    links.new(mask_out.outputs[&quot;Color&quot;], tex_mul.inputs[&quot;Color2&quot;])
+
+    base_rgb = nodes.new(&quot;ShaderNodeRGB&quot;)
+    base_rgb.location = (650, -180)
+    base_rgb.outputs[0].default_value = color
+
+    final_color = blend_lit_with_base_texture(
+        nodes, links, mask_out, base_rgb.outputs[&quot;Color&quot;], tex_mul.outputs[&quot;Color&quot;]
+    )
+
+    emission = nodes.new(&quot;ShaderNodeEmission&quot;)
+    emission.location = (1000, 0)
+    emission.inputs[&quot;Strength&quot;].default_value = PLANET_EMISSION_STRENGTH
+    links.new(final_color.outputs[&quot;Color&quot;], emission.inputs[&quot;Color&quot;])
+    links.new(emission.outputs[&quot;Emission&quot;], out.inputs[&quot;Surface&quot;])
+
+    return mat
+
+def make_star_shader():
+    mat = bpy.data.materials.new(name=&quot;Sun_Mat&quot;)
+    mat.use_nodes = True
+
+    if hasattr(mat, &quot;shadow_method&quot;):
+        mat.shadow_method = &quot;NONE&quot;
+
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new(&quot;ShaderNodeOutputMaterial&quot;)
+    emit = nodes.new(&quot;ShaderNodeEmission&quot;)
+    out.location = (400, 0)
+    emit.location = (200, 0)
+
+    emit.inputs[&quot;Strength&quot;].default_value = 5.0
+
+    sun_tex = resolve_asset_path(&quot;Sun.jpg&quot;)
+    if os.path.exists(sun_tex):
+        coord = nodes.new(&quot;ShaderNodeTexCoord&quot;)
+        mapping = nodes.new(&quot;ShaderNodeMapping&quot;)
+        img = nodes.new(&quot;ShaderNodeTexImage&quot;)
+
+        coord.location = (-400, 0)
+        mapping.location = (-200, 0)
+        img.location = (0, 0)
+
+        try:
+            img.image = bpy.data.images.load(sun_tex, check_existing=True)
+            links.new(coord.outputs[&quot;UV&quot;], mapping.inputs[&quot;Vector&quot;])
+            links.new(mapping.outputs[&quot;Vector&quot;], img.inputs[&quot;Vector&quot;])
+            links.new(img.outputs[&quot;Color&quot;], emit.inputs[&quot;Color&quot;])
+        except Exception:
+            emit.inputs[&quot;Color&quot;].default_value = (1.0, 0.55, 0.15, 1.0)
     else:
-        emit.inputs[&quot;Color&quot;].default_value = (1.0, 0.55, 0.1, 1.0)
+        emit.inputs[&quot;Color&quot;].default_value = (1.0, 0.55, 0.15, 1.0)
 
     links.new(emit.outputs[&quot;Emission&quot;], out.inputs[&quot;Surface&quot;])
     return mat
 
-
-def make_corona_mat():
-    mat = bpy.data.materials.new(name=&quot;Corona_Mat&quot;)
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-    links = mat.node_tree.links
-    nodes.clear()
-
-    out   = nodes.new(&quot;ShaderNodeOutputMaterial&quot;); out.location   = (900, 0)
-    emit  = nodes.new(&quot;ShaderNodeEmission&quot;);       emit.location  = (500, 100)
-    trans = nodes.new(&quot;ShaderNodeBsdfTransparent&quot;); trans.location = (500, -100)
-    fres  = nodes.new(&quot;ShaderNodeFresnel&quot;);        fres.location  = (100, 200)
-    ramp  = nodes.new(&quot;ShaderNodeValToRGB&quot;);       ramp.location  = (300, 200)
-    mx    = nodes.new(&quot;ShaderNodeMixShader&quot;);      mx.location    = (700, 0)
-
-    emit.inputs[&quot;Color&quot;].default_value    = (1.0, 0.35, 0.02, 1)
-    emit.inputs[&quot;Strength&quot;].default_value = 1.5
-    fres.inputs[&quot;IOR&quot;].default_value = 1.12
-    ramp.color_ramp.elements[0].position = 0.0
-    ramp.color_ramp.elements[0].color = (0, 0, 0, 1)
-    ramp.color_ramp.elements[1].position = 0.65
-    ramp.color_ramp.elements[1].color = (1, 1, 1, 1)
-
-    links.new(fres.outputs[&quot;Fac&quot;],    ramp.inputs[&quot;Fac&quot;])
-    links.new(ramp.outputs[&quot;Color&quot;],  mx.inputs[0])
-    links.new(trans.outputs[&quot;BSDF&quot;],  mx.inputs[1])
-    links.new(emit.outputs[&quot;Emission&quot;], mx.inputs[2])
-    links.new(mx.outputs[&quot;Shader&quot;],   out.inputs[&quot;Surface&quot;])
-
-    mat.blend_method = &quot;BLEND&quot;
-    if hasattr(mat, &quot;shadow_method&quot;): mat.shadow_method = &quot;NONE&quot;
-    mat.use_backface_culling = False
-    return mat
-
-
-def make_ring_mat():
+def make_disc_shader():
     mat = bpy.data.materials.new(name=&quot;Ring_Mat&quot;)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     nodes.clear()
-    out  = nodes.new(&quot;ShaderNodeOutputMaterial&quot;); out.location  = (600, 0)
-    bsdf = nodes.new(&quot;ShaderNodeBsdfPrincipled&quot;); bsdf.location = (300, 0)
-    bsdf.inputs[&quot;Roughness&quot;].default_value  = 0.9
-    bsdf.inputs[&quot;Alpha&quot;].default_value      = 0.65
-    bsdf.inputs[&quot;Base Color&quot;].default_value = (0.85, 0.78, 0.65, 1.0)
-    links.new(bsdf.outputs[&quot;BSDF&quot;], out.inputs[&quot;Surface&quot;])
+
+    out = nodes.new(&quot;ShaderNodeOutputMaterial&quot;)
+    out.location = (1400, 0)
+
+    diffuse = nodes.new(&quot;ShaderNodeBsdfPrincipled&quot;)
+    diffuse.location = (0, 300)
+    diffuse.inputs[&quot;Base Color&quot;].default_value = (1.0, 1.0, 1.0, 1.0)
+    diffuse.inputs[&quot;Roughness&quot;].default_value = 0.9
+
+    s2rgb = nodes.new(&quot;ShaderNodeShaderToRGB&quot;)
+    s2rgb.location = (200, 300)
+    links.new(diffuse.outputs[&quot;BSDF&quot;], s2rgb.inputs[&quot;Shader&quot;])
+
+    mask_out = build_distance_compensated_mask(nodes, links, s2rgb, point_light_energy=SUN_POINT_ENERGY)
+
+    tex_mul = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    tex_mul.blend_type = &#x27;MULTIPLY&#x27;
+    tex_mul.inputs[&quot;Fac&quot;].default_value = 1.0
+    tex_mul.inputs[&quot;Color1&quot;].default_value = (0.85, 0.78, 0.65, 1.0)
+    tex_mul.location = (800, 0)
+    links.new(mask_out.outputs[&quot;Color&quot;], tex_mul.inputs[&quot;Color2&quot;])
+
+    base_rgb = nodes.new(&quot;ShaderNodeRGB&quot;)
+    base_rgb.location = (650, -180)
+    base_rgb.outputs[0].default_value = (0.85, 0.78, 0.65, 1.0)
+
+    final_color = blend_lit_with_base_texture(
+        nodes, links, mask_out, base_rgb.outputs[&quot;Color&quot;], tex_mul.outputs[&quot;Color&quot;]
+    )
+
+    emission = nodes.new(&quot;ShaderNodeEmission&quot;)
+    emission.location = (1000, 0)
+    emission.inputs[&quot;Strength&quot;].default_value = PLANET_EMISSION_STRENGTH
+    links.new(final_color.outputs[&quot;Color&quot;], emission.inputs[&quot;Color&quot;])
+
+    tr = nodes.new(&quot;ShaderNodeBsdfTransparent&quot;)
+    tr.location = (1000, -150)
+
+    mx = nodes.new(&quot;ShaderNodeMixShader&quot;)
+    mx.location = (1200, -50)
+    mx.inputs[0].default_value = 0.65  # Alpha
+
+    links.new(tr.outputs[&quot;BSDF&quot;], mx.inputs[1])
+    links.new(emission.outputs[&quot;Emission&quot;], mx.inputs[2])
+    links.new(mx.outputs[&quot;Shader&quot;], out.inputs[&quot;Surface&quot;])
+
     mat.blend_method = &quot;BLEND&quot;
-    if hasattr(mat, &quot;shadow_method&quot;): mat.shadow_method = &quot;NONE&quot;
-    return mat
+    if hasattr(mat, &quot;shadow_method&quot;):
+        mat.shadow_method = &quot;NONE&quot;
 
-
-def make_solid_mat(name, color=(0.8,0.8,0.8,1), metallic=0.0, roughness=0.5):
-    mat = bpy.data.materials.new(name=name)
-    mat.use_nodes = True
-    bsdf = mat.node_tree.nodes.get(&quot;Principled BSDF&quot;)
-    bsdf.inputs[&quot;Base Color&quot;].default_value = color
-    bsdf.inputs[&quot;Metallic&quot;].default_value   = metallic
-    bsdf.inputs[&quot;Roughness&quot;].default_value  = roughness
     return mat
 
 # ============================================================
@@ -1761,70 +1883,68 @@ def make_solid_mat(name, color=(0.8,0.8,0.8,1), metallic=0.0, roughness=0.5):
 # ============================================================
 def add_globe(name, radius, location=(0,0,0), segments=64, rings=32):
     bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location, segments=segments, ring_count=rings)
-    obj = bpy.context.active_object; obj.name = name
+    obj = bpy.context.active_object
+    obj.name = name
     bpy.ops.object.shade_smooth()
     return obj
 
 def add_flat_ring(name, radius, location=(0,0,0)):
     bpy.ops.mesh.primitive_cylinder_add(vertices=128, radius=radius, depth=0.001, location=location)
-    obj = bpy.context.active_object; obj.name = name
+    obj = bpy.context.active_object
+    obj.name = name
     bpy.ops.object.shade_smooth()
     return obj
 
 def add_anchor(name, location=(0,0,0)):
     bpy.ops.object.empty_add(type=&#x27;PLAIN_AXES&#x27;, location=location)
-    obj = bpy.context.active_object; obj.name = name
+    obj = bpy.context.active_object
+    obj.name = name
     return obj
 
-def add_light(name, location, energy, radius=0.5, color=(1,0.9,0.7), use_shadow=True, light_type=&#x27;POINT&#x27;):
-    bpy.ops.object.light_add(type=light_type, location=location)
-    light = bpy.context.active_object; light.name = name
-    light.data.energy = energy; light.data.color = color
-    if hasattr(light.data, &quot;shadow_soft_size&quot;): light.data.shadow_soft_size = radius
-    light.data.use_shadow = use_shadow
-    if light_type == &#x27;POINT&#x27; and hasattr(light.data, &quot;use_contact_shadow&quot;):
-        light.data.use_contact_shadow = True
-        if hasattr(light.data, &quot;contact_shadow_distance&quot;): light.data.contact_shadow_distance = 15.0
-        if hasattr(light.data, &quot;contact_shadow_bias&quot;):     light.data.contact_shadow_bias = 0.005
-        if hasattr(light.data, &quot;contact_shadow_thickness&quot;):light.data.contact_shadow_thickness = 0.5
-    return light
-
-def assign_mat(obj, mat):
-    if obj.data.materials: obj.data.materials[0] = mat
-    else: obj.data.materials.append(mat)
+def assign_shader(obj, mat):
+    if obj.data.materials:
+        obj.data.materials[0] = mat
+    else:
+        obj.data.materials.append(mat)
 
 # ============================================================
-# SATELLITE
+# INLINE SATELLITE BUILDER
 # ============================================================
-def build_satellite(orbit_r, pivot_obj, scale_factor):
+def generate_satellite_in_scene(orbit_r, pivot_obj, scale_factor):
     bpy.ops.object.empty_add(type=&#x27;PLAIN_AXES&#x27;, location=(0,0,0))
-    root = bpy.context.active_object; root.name = &quot;Satellite_Root&quot;
-    mb  = make_solid_mat(&quot;SAT_Body&quot;,  (0.75,0.77,0.80,1), 0.35, 0.35)
-    mpn = make_solid_mat(&quot;SAT_Panel&quot;, (0.08,0.14,0.28,1), 0.05, 0.25)
-    mf  = make_solid_mat(&quot;SAT_Frame&quot;, (0.15,0.15,0.16,1), 0.55, 0.3)
-    md  = make_solid_mat(&quot;SAT_Dish&quot;,  (0.85,0.85,0.86,1), 0.15, 0.4)
+    root = bpy.context.active_object
+    root.name = &quot;Satellite_Root&quot;
 
-    def cube(n, s, l):
-        bpy.ops.mesh.primitive_cube_add(size=1.0, location=l)
-        o = bpy.context.active_object; o.name = n; o.scale = s
+    mat_body  = make_solid_mat(&quot;SAT_Body_Mat&quot;,  color=(0.75, 0.77, 0.80, 1), metallic=0.35, roughness=0.35)
+    mat_panel = make_solid_mat(&quot;SAT_Panel_Mat&quot;, color=(0.08, 0.14, 0.28, 1), metallic=0.05, roughness=0.25)
+    mat_frame = make_solid_mat(&quot;SAT_Frame_Mat&quot;, color=(0.15, 0.15, 0.16, 1), metallic=0.55, roughness=0.3)
+    mat_dish  = make_solid_mat(&quot;SAT_Dish_Mat&quot;,  color=(0.85, 0.85, 0.86, 1), metallic=0.15, roughness=0.4)
+
+    def new_cube(name, size, loc):
+        bpy.ops.mesh.primitive_cube_add(size=1.0, location=loc)
+        obj = bpy.context.active_object
+        obj.name = name
+        obj.scale = size
         bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
-        return o
-    def cyl(n, r, d, l, rot=(0,0,0)):
-        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=r, depth=d, location=l, rotation=rot)
-        o = bpy.context.active_object; o.name = n
-        return o
+        return obj
 
-    b = cube(&quot;SB&quot;, (0.55,0.35,0.30), (0,0,0));       b.data.materials.append(mb); b.parent = root
-    cube(&quot;SN&quot;, (0.18,0.20,0.16), (0.55,0,0)).data.materials.append(mf); bpy.context.active_object.parent = root
-    cyl(&quot;SM&quot;, 0.02, 0.5, (0,0,0.42), (math.radians(90),0,0)).data.materials.append(mf); bpy.context.active_object.parent = root
-    cyl(&quot;SD&quot;, 0.20, 0.03, (0.72,0,0), (0,math.radians(90),0)).data.materials.append(md); bpy.context.active_object.parent = root
-    cube(&quot;AL&quot;, (0.45,0.03,0.03), (0,0.40,0)).data.materials.append(mf); bpy.context.active_object.parent = root
-    cube(&quot;AR&quot;, (0.45,0.03,0.03), (0,-0.40,0)).data.materials.append(mf); bpy.context.active_object.parent = root
-    cube(&quot;PL&quot;, (0.95,0.30,0.02), (0,0.90,0)).data.materials.append(mpn); bpy.context.active_object.parent = root
-    cube(&quot;PR&quot;, (0.95,0.30,0.02), (0,-0.90,0)).data.materials.append(mpn); bpy.context.active_object.parent = root
+    def new_cyl(name, radius, depth, loc, rot=(0,0,0)):
+        bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=radius, depth=depth, location=loc, rotation=rot)
+        obj = bpy.context.active_object
+        obj.name = name
+        return obj
+
+    body    = new_cube(&quot;SAT_Body&quot;,   size=(0.55, 0.35, 0.30), loc=(0, 0, 0));          body.data.materials.append(mat_body);   body.parent = root
+    nose    = new_cube(&quot;SAT_Nose&quot;,   size=(0.18, 0.20, 0.16), loc=(0.55, 0, 0));       nose.data.materials.append(mat_frame);  nose.parent = root
+    mast    = new_cyl( &quot;SAT_Mast&quot;,   radius=0.02, depth=0.5,  loc=(0.0, 0.0, 0.42),   rot=(math.radians(90),0,0)); mast.data.materials.append(mat_frame);  mast.parent = root
+    dish    = new_cyl( &quot;SAT_Dish&quot;,   radius=0.20, depth=0.03, loc=(0.72, 0, 0),        rot=(0, math.radians(90), 0)); dish.data.materials.append(mat_dish);   dish.parent = root
+    arm_l   = new_cube(&quot;SAT_Arm_L&quot;,  size=(0.45, 0.03, 0.03), loc=(0, 0.40, 0));       arm_l.data.materials.append(mat_frame);  arm_l.parent = root
+    arm_r   = new_cube(&quot;SAT_Arm_R&quot;,  size=(0.45, 0.03, 0.03), loc=(0, -0.40, 0));      arm_r.data.materials.append(mat_frame);  arm_r.parent = root
+    panel_l = new_cube(&quot;SAT_Panel_L&quot;,size=(0.95, 0.30, 0.02), loc=(0, 0.90, 0));       panel_l.data.materials.append(mat_panel); panel_l.parent = root
+    panel_r = new_cube(&quot;SAT_Panel_R&quot;,size=(0.95, 0.30, 0.02), loc=(0, -0.90, 0));      panel_r.data.materials.append(mat_panel); panel_r.parent = root
 
     root.location = (orbit_r, 0, 0)
-    root.scale = (scale_factor,)*3
+    root.scale = (scale_factor, scale_factor, scale_factor)
     root.parent = pivot_obj
     return root
 
@@ -1832,18 +1952,18 @@ def build_satellite(orbit_r, pivot_obj, scale_factor):
 # DATA
 # ============================================================
 PLANET_DATA = [
-    (&quot;Mercury&quot;, 0.11, 12,    88,    58,    0.03,  (0.6,0.5,0.45,1),   &quot;Mercury.jpg&quot;),
-    (&quot;Venus&quot;,   0.28, 18,    225,   243,   177.4, (0.9,0.8,0.5,1),    &quot;Venus.jpg&quot;),
-    (&quot;Earth&quot;,   0.30, 25,    365,   1,     23.4,  (0.2,0.5,0.9,1),    &quot;Earth.jpg&quot;),
-    (&quot;Mars&quot;,    0.16, 34,    687,   1.03,  25.2,  (0.8,0.4,0.2,1),    &quot;Mars.jpg&quot;),
-    (&quot;Jupiter&quot;, 3.36, 55,    4333,  0.41,  3.1,   (0.8,0.7,0.55,1),   &quot;Jupiter.jpg&quot;),
-    (&quot;Saturn&quot;,  2.83, 80,    10759, 0.45,  26.7,  (0.9,0.85,0.6,1),   &quot;Saturn.jpg&quot;),
-    (&quot;Uranus&quot;,  1.20, 105,   30688, 0.72,  97.8,  (0.5,0.85,0.9,1),   &quot;Uranus.jpg&quot;),
-    (&quot;Neptune&quot;, 1.16, 125,   60182, 0.67,  28.3,  (0.2,0.4,0.9,1),    &quot;Neptune.jpg&quot;),
-    (&quot;Pluto&quot;,   0.05, 150,   90560, 6.39,  122.5, (0.6,0.5,0.4,1),    &quot;Pluto.jpg&quot;),
+    (&quot;Mercury&quot;, 0.11, 12,  88,    58,   0.03,  (0.6, 0.5, 0.45, 1)),
+    (&quot;Venus&quot;,   0.28, 18,  225,   243,  177.4, (0.9, 0.8, 0.5,  1)),
+    (&quot;Earth&quot;,   0.30, 25,  365,   1,    23.4,  (0.2, 0.5, 0.9,  1)),
+    (&quot;Mars&quot;,    0.16, 34,  687,   1.03, 25.2,  (0.8, 0.4, 0.2,  1)),
+    (&quot;Jupiter&quot;, 3.36, 55,  4333,  0.41, 3.1,   (0.8, 0.7, 0.55, 1)),
+    (&quot;Saturn&quot;,  2.83, 80,  10759, 0.45, 26.7,  (0.9, 0.85, 0.6, 1)),
+    (&quot;Uranus&quot;,  1.20, 105, 30688, 0.72, 97.8,  (0.5, 0.85, 0.9, 1)),
+    (&quot;Neptune&quot;, 1.16, 125, 60182, 0.67, 28.3,  (0.2, 0.4, 0.9,  1)),
+    (&quot;Pluto&quot;,   0.05, 150, 90560, 6.39, 122.5, (0.6, 0.5, 0.4,  1)),
 ]
 
-SUN_RADIUS  = 8.0
+SUN_RADIUS = 8.0
 SPEED_SCALE = 1.5
 
 # ============================================================
@@ -1852,316 +1972,415 @@ SPEED_SCALE = 1.5
 def build_system():
     planets = {}
 
-    print(&quot;  Sun...&quot;)
-    sun = add_globe(&quot;Sun&quot;, SUN_RADIUS)
-    assign_mat(sun, make_sun_mat())
-    sun.visible_shadow = False
-    sun.visible_transmission = False
-    sun.visible_volume_scatter = False
-    if hasattr(sun, &quot;cycles_visibility&quot;): sun.cycles_visibility.shadow = False
+    sun_obj = add_globe(&quot;Sun&quot;, SUN_RADIUS)
+    assign_shader(sun_obj, make_star_shader())
 
-    corona = add_globe(&quot;Sun_Corona&quot;, SUN_RADIUS * 1.15, segments=64, rings=32)
-    assign_mat(corona, make_corona_mat())
-    corona.visible_shadow = False
-    corona.visible_transmission = False
-    corona.visible_volume_scatter = False
-    if hasattr(corona, &quot;cycles_visibility&quot;): corona.cycles_visibility.shadow = False
+    # Hidden point light inside the sun solely for generating the accurate shadows
+    # that the shader maps use.
+    bpy.ops.object.light_add(type=&#x27;POINT&#x27;, location=(0, 0, 0))
+    sun_point = bpy.context.active_object
+    sun_point.name = &quot;Sun_Point&quot;
+    sun_point.data.energy = SUN_POINT_ENERGY
+    sun_point.data.shadow_soft_size = SUN_RADIUS * 0.5
+    sun_point.data.use_shadow = True
 
-    # â”€â”€ LIGHTING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    # Main point light â€“ shadows, central glow
-    sl = add_light(&quot;SunLight&quot;, (0,0,0), 120000, SUN_RADIUS, (1.0,0.96,0.90), light_type=&#x27;POINT&#x27;)
-    sl.data.use_custom_distance = True; sl.data.cutoff_distance = 800.0
-
-    # KEY FIX: SUN-type light â€“ NO distance falloff at all
-    # This guarantees Uranus, Neptune, Pluto are fully lit
-    sun_fill = add_light(&quot;SunFill_Uniform&quot;, (0,0,0), 8.0, 1.0, (1.0,0.97,0.90), use_shadow=False, light_type=&#x27;SUN&#x27;)
-    if hasattr(sun_fill.data, &quot;angle&quot;):
-        sun_fill.data.angle = 0.05
-
-    # Second SUN light from slightly different angle for depth
-    sun_fill2 = add_light(&quot;SunFill_Side&quot;, (0,0,0), 3.0, 1.0, (0.7,0.8,1.0), use_shadow=False, light_type=&#x27;SUN&#x27;)
-    sun_fill2.rotation_euler = (math.radians(30), math.radians(45), 0)
-
-    # Extra point fill from above
-    add_light(&quot;SunFill_Top&quot;, (0,0,80), 20000, SUN_RADIUS*3, (0.7,0.80,1.0), use_shadow=False, light_type=&#x27;POINT&#x27;)
-
-    # Rim light
-    add_light(&quot;SunRim&quot;, (0,120,-30), 12000, SUN_RADIUS*4, (0.5,0.6,0.9), use_shadow=False, light_type=&#x27;POINT&#x27;)
-
-    # â”€â”€ Planets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    for (pname, prad, orbit_r, orb_p, rot_p, tilt, fallback, tex_file) in PLANET_DATA:
-        print(f&quot;  {pname} (texture: {tex_file})...&quot;)
+    for (pname, prad, orbit_r, orb_period, rot_period, axial_tilt, base_color) in PLANET_DATA:
         pivot = add_anchor(f&quot;{pname}_Pivot&quot;)
         planet = add_globe(pname, prad, location=(orbit_r, 0, 0))
         planet.parent = pivot
-        planet.rotation_euler.x = math.radians(tilt)
-        mat = make_planet_mat(f&quot;{pname}_Mat&quot;, tex_file, roughness=0.85, fallback=fallback)
-        assign_mat(planet, mat)
-        planets[pname] = {&quot;pivot&quot;: pivot, &quot;planet&quot;: planet, &quot;orbit_r&quot;: orbit_r, &quot;radius&quot;: prad, &quot;base_color&quot;: fallback}
+        planet.rotation_euler.x = math.radians(axial_tilt)
 
-    # â”€â”€ Saturn ring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    sr = planets[&quot;Saturn&quot;][&quot;radius&quot;]
-    ring = add_flat_ring(&quot;Saturn_Ring&quot;, sr * 2.2)
-    ring.parent = planets[&quot;Saturn&quot;][&quot;planet&quot;]
-    assign_mat(ring, make_ring_mat())
+        tpath = fetch_surface_map(pname)
+        mat = make_surface_shader(f&quot;{pname}_Mat&quot;, tpath, roughness=0.85, metallic=0.0, fallback_color=base_color)
+        assign_shader(planet, mat)
 
-    # â”€â”€ Moon â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    print(&quot;  Moon (texture: Moon.jpg)...&quot;)
-    eo = planets[&quot;Earth&quot;][&quot;planet&quot;]; er = planets[&quot;Earth&quot;][&quot;radius&quot;]
-    mpv = add_anchor(&quot;Moon_Pivot&quot;); mpv.parent = eo
-    moon = add_globe(&quot;Moon&quot;, er*0.42, location=(er*4.2, 0, 0))
-    moon.parent = mpv
-    assign_mat(moon, make_planet_mat(&quot;Moon_Mat&quot;, &quot;Moon.jpg&quot;, 0.9, (0.75,0.75,0.78,1)))
-    mpv.rotation_euler = (0,0,0); mpv.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
-    mpv.rotation_euler.z = math.radians(360*13); mpv.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
-    set_interp(mpv, &#x27;LINEAR&#x27;)
+        planets[pname] = {&quot;pivot&quot;: pivot, &quot;planet&quot;: planet, &quot;orbit_r&quot;: orbit_r, &quot;radius&quot;: prad, &quot;base_color&quot;: base_color}
 
-    # â”€â”€ Satellite â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    sp = add_anchor(&quot;Satellite_Pivot&quot;); sp.parent = eo
-    sp.rotation_euler = (math.radians(28), 0, 0)
-    sb = build_satellite(er*1.6, sp, er*0.25)
-    sp.rotation_euler = (math.radians(28), 0, 0)
-    sp.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
-    sp.rotation_euler = (math.radians(28), 0, math.radians(360*12))
-    sp.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
-    set_interp(sp, &#x27;LINEAR&#x27;)
-    sb.rotation_euler = (0,0,0); sb.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
-    sb.rotation_euler.y = math.radians(360*3); sb.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
-    set_interp(sb, &#x27;LINEAR&#x27;)
+    sat_obj = planets[&quot;Saturn&quot;][&quot;planet&quot;]
+    sat_r = planets[&quot;Saturn&quot;][&quot;radius&quot;]
+    ring = add_flat_ring(&quot;Saturn_Ring&quot;, radius=sat_r * 2.2, location=(0, 0, 0))
+    ring.parent = sat_obj
+    assign_shader(ring, make_disc_shader())
 
-    try:
-        bpy.ops.object.lightprobe_add(type=&#x27;GRID&#x27;, location=(0,0,0))
-        p = bpy.context.active_object; p.name = &quot;IrradianceVolume&quot;
-        p.scale = (180,180,40)
-        p.data.grid_resolution_x = 4; p.data.grid_resolution_y = 4; p.data.grid_resolution_z = 2
-        p.data.influence_distance = 200
-    except: pass
+    earth_obj = planets[&quot;Earth&quot;][&quot;planet&quot;]
+    earth_r = planets[&quot;Earth&quot;][&quot;radius&quot;]
+    moon_radius = earth_r * 0.42
+    moon_orbit_r = earth_r * 4.2
+
+    moon_pivot = add_anchor(&quot;Moon_Pivot&quot;, location=(0, 0, 0))
+    moon_pivot.parent = earth_obj
+
+    moon = add_globe(&quot;Moon&quot;, moon_radius, location=(moon_orbit_r, 0, 0))
+    moon.parent = moon_pivot
+
+    moon_tex = resolve_asset_path(&quot;Moon.jpg&quot;)
+    moon_mat = make_surface_shader(
+        &quot;Moon_Mat&quot;,
+        moon_tex,
+        roughness=0.9,
+        metallic=0.0,
+        fallback_color=(0.75, 0.75, 0.78, 1.0)
+    )
+    assign_shader(moon, moon_mat)
+
+    moon_pivot.rotation_euler = (0, 0, 0)
+    moon_pivot.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
+    moon_pivot.rotation_euler.z = math.radians(360 * 13)
+    moon_pivot.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
+    set_interp(moon_pivot, &#x27;LINEAR&#x27;)
+
+    sat_orbit_r = earth_r * 1.6
+    sat_pivot = add_anchor(&quot;Satellite_Pivot&quot;)
+    sat_pivot.parent = earth_obj
+    sat_pivot.rotation_euler = (math.radians(28), 0, 0)
+
+    sat_scale = earth_r * 0.25
+    sat_body = generate_satellite_in_scene(sat_orbit_r, sat_pivot, sat_scale)
+
+    sat_pivot.rotation_euler = (math.radians(28), 0, 0)
+    sat_pivot.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
+    sat_pivot.rotation_euler = (math.radians(28), 0, math.radians(360 * 12))
+    sat_pivot.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
+    set_interp(sat_pivot, &#x27;LINEAR&#x27;)
+
+    sat_body.rotation_euler = (0, 0, 0)
+    sat_body.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
+    sat_body.rotation_euler.y = math.radians(360 * 3)
+    sat_body.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
+    set_interp(sat_body, &#x27;LINEAR&#x27;)
 
     return planets
 
 # ============================================================
 # ORBIT LINES
 # ============================================================
-def render_orbits():
-    mat = bpy.data.materials.new(&quot;Orbit_Mat&quot;)
+def render_orbit_lines():
+    mat = bpy.data.materials.new(&quot;Orbit_Line_Mat&quot;)
     mat.use_nodes = True
-    n = mat.node_tree.nodes; l = mat.node_tree.links; n.clear()
-    out = n.new(&quot;ShaderNodeOutputMaterial&quot;)
-    em  = n.new(&quot;ShaderNodeEmission&quot;)
-    tr  = n.new(&quot;ShaderNodeBsdfTransparent&quot;)
-    mx  = n.new(&quot;ShaderNodeMixShader&quot;)
-    em.inputs[&quot;Color&quot;].default_value = (0.55,0.75,1.0,1.0)
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new(&quot;ShaderNodeOutputMaterial&quot;)
+    em = nodes.new(&quot;ShaderNodeEmission&quot;)
+    tr = nodes.new(&quot;ShaderNodeBsdfTransparent&quot;)
+    mx = nodes.new(&quot;ShaderNodeMixShader&quot;)
+
+    em.inputs[&quot;Color&quot;].default_value = (0.55, 0.75, 1.0, 1.0)
     em.inputs[&quot;Strength&quot;].default_value = 0.3
     mx.inputs[0].default_value = 0.85
-    l.new(tr.outputs[&quot;BSDF&quot;], mx.inputs[1])
-    l.new(em.outputs[&quot;Emission&quot;], mx.inputs[2])
-    l.new(mx.outputs[&quot;Shader&quot;], out.inputs[&quot;Surface&quot;])
+
+    links.new(tr.outputs[&quot;BSDF&quot;], mx.inputs[1])
+    links.new(em.outputs[&quot;Emission&quot;], mx.inputs[2])
+    links.new(mx.outputs[&quot;Shader&quot;], out.inputs[&quot;Surface&quot;])
+
     mat.blend_method = &quot;BLEND&quot;
-    if hasattr(mat, &quot;shadow_method&quot;): mat.shadow_method = &quot;NONE&quot;
+    if hasattr(mat, &quot;shadow_method&quot;):
+        mat.shadow_method = &quot;NONE&quot;
 
     segs = 256
-    for row in PLANET_DATA:
-        pname, orbit_r = row[0], row[2]
-        cd = bpy.data.curves.new(f&quot;Orbit_{pname}&quot;, &#x27;CURVE&#x27;)
-        cd.dimensions = &#x27;3D&#x27;; cd.bevel_depth = 0.015; cd.use_fill_caps = True
-        sp = cd.splines.new(&#x27;POLY&#x27;); sp.use_cyclic_u = True; sp.points.add(segs-1)
+    for (pname, _, orbit_r, *_rest) in PLANET_DATA:
+        cd = bpy.data.curves.new(name=f&quot;Orbit_{pname}&quot;, type=&#x27;CURVE&#x27;)
+        cd.dimensions = &#x27;3D&#x27;
+        cd.bevel_depth = 0.015
+        cd.use_fill_caps = True
+        sp = cd.splines.new(&#x27;POLY&#x27;)
+        sp.use_cyclic_u = True
+        sp.points.add(segs - 1)
         for i, pt in enumerate(sp.points):
-            a = (2*math.pi*i)/segs
-            pt.co = (orbit_r*math.cos(a), orbit_r*math.sin(a), 0, 1)
+            a = (2 * math.pi * i) / segs
+            pt.co = (orbit_r * math.cos(a), orbit_r * math.sin(a), 0.0, 1.0)
         ob = bpy.data.objects.new(f&quot;Orbit_{pname}&quot;, cd)
         bpy.context.collection.objects.link(ob)
         ob.data.materials.append(mat)
 
 # ============================================================
-# ASTEROIDS
+# ASTEROIDS (TEXTURED)
 # ============================================================
-def place_asteroids():
-    root = add_anchor(&quot;AsteroidField&quot;)
-    mat = make_planet_mat(&quot;Asteroid_Mat&quot;, &quot;Asteroid.jpg&quot;, 0.95, (0.35,0.33,0.30,1))
-    for i in range(80):
+def place_debris():
+    root = add_anchor(&quot;AsteroidField_Root&quot;)
+
+    mat = bpy.data.materials.new(&quot;Asteroid_Mat&quot;)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new(&quot;ShaderNodeOutputMaterial&quot;)
+    out.location = (1400, 0)
+
+    diffuse = nodes.new(&quot;ShaderNodeBsdfPrincipled&quot;)
+    diffuse.location = (0, 300)
+    diffuse.inputs[&quot;Base Color&quot;].default_value = (1.0, 1.0, 1.0, 1.0)
+    diffuse.inputs[&quot;Roughness&quot;].default_value = 0.95
+    diffuse.inputs[&quot;Metallic&quot;].default_value = 0.0
+
+    s2rgb = nodes.new(&quot;ShaderNodeShaderToRGB&quot;)
+    s2rgb.location = (200, 300)
+    links.new(diffuse.outputs[&quot;BSDF&quot;], s2rgb.inputs[&quot;Shader&quot;])
+
+    mask_out = build_distance_compensated_mask(nodes, links, s2rgb, point_light_energy=SUN_POINT_ENERGY)
+
+    ast_tex = resolve_asset_path(&quot;Asteroid.jpg&quot;)
+    tex = nodes.new(&quot;ShaderNodeTexImage&quot;)
+    tex.location = (-300, 0)
+    coord = nodes.new(&quot;ShaderNodeTexCoord&quot;)
+    coord.location = (-700, 0)
+    mapping = nodes.new(&quot;ShaderNodeMapping&quot;)
+    mapping.location = (-500, 0)
+
+    noise = nodes.new(&quot;ShaderNodeTexNoise&quot;)
+    noise.location = (-500, -250)
+    noise.inputs[&quot;Scale&quot;].default_value = 8.0
+
+    ramp = nodes.new(&quot;ShaderNodeValToRGB&quot;)
+    ramp.location = (-300, -250)
+    ramp.color_ramp.elements[0].color = (0.75, 0.75, 0.75, 1.0)
+    ramp.color_ramp.elements[1].color = (1.1, 1.1, 1.1, 1.0)
+
+    mul = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    mul.location = (-50, -120)
+    mul.blend_type = &#x27;MULTIPLY&#x27;
+    mul.inputs[&quot;Fac&quot;].default_value = 0.7
+
+    if os.path.exists(ast_tex):
+        try:
+            tex.image = bpy.data.images.load(ast_tex, check_existing=True)
+        except Exception:
+            pass
+
+    links.new(coord.outputs[&quot;UV&quot;], mapping.inputs[&quot;Vector&quot;])
+    links.new(mapping.outputs[&quot;Vector&quot;], tex.inputs[&quot;Vector&quot;])
+    links.new(tex.outputs[&quot;Color&quot;], mul.inputs[&quot;Color1&quot;])
+    links.new(noise.outputs[&quot;Fac&quot;], ramp.inputs[&quot;Fac&quot;])
+    links.new(ramp.outputs[&quot;Color&quot;], mul.inputs[&quot;Color2&quot;])
+
+    final_mul = nodes.new(&quot;ShaderNodeMixRGB&quot;)
+    final_mul.blend_type = &#x27;MULTIPLY&#x27;
+    final_mul.inputs[&quot;Fac&quot;].default_value = 1.0
+    final_mul.location = (800, 0)
+    links.new(mul.outputs[&quot;Color&quot;], final_mul.inputs[&quot;Color1&quot;])
+    links.new(mask_out.outputs[&quot;Color&quot;], final_mul.inputs[&quot;Color2&quot;])
+
+    final_color = blend_lit_with_base_texture(
+        nodes, links, mask_out, mul.outputs[&quot;Color&quot;], final_mul.outputs[&quot;Color&quot;]
+    )
+
+    emission = nodes.new(&quot;ShaderNodeEmission&quot;)
+    emission.location = (1000, 0)
+    emission.inputs[&quot;Strength&quot;].default_value = PLANET_EMISSION_STRENGTH
+    links.new(final_color.outputs[&quot;Color&quot;], emission.inputs[&quot;Color&quot;])
+    links.new(emission.outputs[&quot;Emission&quot;], out.inputs[&quot;Surface&quot;])
+
+    count = 80
+    for i in range(count):
         bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=2, radius=0.7)
-        a = bpy.context.active_object; a.name = f&quot;Ast_{i:02d}&quot;
-        a.scale = (random.uniform(0.6,2.0), random.uniform(0.6,2.0), random.uniform(0.5,1.8))
-        ang = random.uniform(0, 2*math.pi)
-        dist = random.uniform(20.0, 170.0)
-        a.location = (dist*math.cos(ang), dist*math.sin(ang), random.uniform(-25, 25))
-        assign_mat(a, mat); a.parent = root
+        a = bpy.context.active_object
+        a.name = f&quot;Asteroid_{i:02d}&quot;
+        a.scale = (
+            random.uniform(0.6, 2.0),
+            random.uniform(0.6, 2.0),
+            random.uniform(0.5, 1.8)
+        )
+        a.location = (
+            random.uniform(20.0, 170.0) * math.cos(random.uniform(0, 2 * math.pi)),
+            random.uniform(20.0, 170.0) * math.sin(random.uniform(0, 2 * math.pi)),
+            random.uniform(-25.0, 25.0)
+        )
+        assign_shader(a, mat)
+        a.parent = root
 
 # ============================================================
 # MOTION
 # ============================================================
-def animate(planets):
-    for row in PLANET_DATA:
-        pname, orb_p, tilt = row[0], row[3], row[5]
-        pv = planets[pname][&quot;pivot&quot;]; pl = planets[pname][&quot;planet&quot;]
-        dpf = 360.0 / (orb_p / SPEED_SCALE)
-        pv.rotation_euler = (0,0,0); pv.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
-        pv.rotation_euler.z = math.radians(dpf * FRAME_END)
-        pv.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
-        set_interp(pv, &#x27;LINEAR&#x27;)
-        pl.rotation_euler = (math.radians(tilt), 0, 0)
-        pl.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
-        pl.rotation_euler = (math.radians(tilt), 0, math.radians(0.5*FRAME_END))
-        pl.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
-        set_interp(pl, &#x27;LINEAR&#x27;)
+def run_motion(planets):
+    for (pname, _, _, orb_period, _, axial_tilt, _) in PLANET_DATA:
+        pivot = planets[pname][&quot;pivot&quot;]
+        planet = planets[pname][&quot;planet&quot;]
+
+        deg_per_frame = 360.0 / (orb_period / SPEED_SCALE)
+        pivot.rotation_euler = (0, 0, 0)
+        pivot.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
+        pivot.rotation_euler.z = math.radians(deg_per_frame * FRAME_END)
+        pivot.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
+        set_interp(pivot, &#x27;LINEAR&#x27;)
+
+        planet.rotation_euler = (math.radians(axial_tilt), 0, 0)
+        planet.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=1)
+        planet.rotation_euler = (math.radians(axial_tilt), 0, math.radians(0.5 * FRAME_END))
+        planet.keyframe_insert(data_path=&quot;rotation_euler&quot;, frame=FRAME_END)
+        set_interp(planet, &#x27;LINEAR&#x27;)
 
 # ============================================================
 # LABELS
 # ============================================================
-def add_labels(planets, cam, blocks):
-    fp = tex(&quot;SpaceGrotesk-VariableFont_wght.ttf&quot;)
+def add_name_tags(planets, cam_obj, blocks):
+    font_path = resolve_asset_path(&quot;SpaceGrotesk-VariableFont_wght.ttf&quot;)
     label_nodes = {}
-    for row in PLANET_DATA:
-        pname, prad, orbit_r = row[0], row[1], row[2]
-        pv = planets[pname][&quot;pivot&quot;]
+
+    for (pname, prad, orbit_r, _, _, _, base_color) in PLANET_DATA:
+        pivot = planets[pname][&quot;pivot&quot;]
         lp = prad * 2.5 if pname == &quot;Saturn&quot; else prad
-        rig = add_anchor(f&quot;LR_{pname}&quot;, (orbit_r, 0, 0)); rig.parent = pv
+
+        rig = add_anchor(f&quot;LabelRig_{pname}&quot;, location=(orbit_r, 0, 0))
+        rig.parent = pivot
         t = rig.constraints.new(type=&#x27;TRACK_TO&#x27;)
-        t.target = cam; t.track_axis = &#x27;TRACK_Z&#x27;; t.up_axis = &#x27;UP_Y&#x27;
-        bpy.ops.object.text_add(location=(0,0,0))
-        txt = bpy.context.active_object; txt.parent = rig
-        txt.data.body = pname.upper(); txt.data.size = lp*0.35; txt.data.align_x = &#x27;LEFT&#x27;
-        txt.location = (lp*1.3, lp*0.2, 0)
-        if os.path.exists(fp):
-            try: txt.data.font = bpy.data.fonts.load(fp)
-            except: pass
-        m = bpy.data.materials.new(f&quot;Lbl_{pname}&quot;)
-        m.use_nodes = True; m.blend_method = &#x27;BLEND&#x27;
-        n = m.node_tree.nodes; l = m.node_tree.links; n.clear()
+        t.target = cam_obj
+        t.track_axis = &#x27;TRACK_Z&#x27;
+        t.up_axis = &#x27;UP_Y&#x27;
+
+        bpy.ops.object.text_add(location=(0, 0, 0))
+        txt = bpy.context.active_object
+        txt.parent = rig
+        txt.data.body = pname.upper()
+        txt.data.size = lp * 0.35
+        txt.data.align_x = &#x27;LEFT&#x27;
+        txt.location = (lp * 1.3, lp * 0.2, 0)
+        if os.path.exists(font_path):
+            try:
+                txt.data.font = bpy.data.fonts.load(font_path)
+            except Exception:
+                pass
+
+        m = bpy.data.materials.new(f&quot;Label_{pname}_Mat&quot;)
+        m.use_nodes = True
+        m.blend_method = &#x27;BLEND&#x27;
+        n = m.node_tree.nodes
+        l = m.node_tree.links
+        n.clear()
         o = n.new(&quot;ShaderNodeOutputMaterial&quot;)
-        em = n.new(&quot;ShaderNodeEmission&quot;); tr = n.new(&quot;ShaderNodeBsdfTransparent&quot;)
+        em = n.new(&quot;ShaderNodeEmission&quot;)
+        tr = n.new(&quot;ShaderNodeBsdfTransparent&quot;)
         mx = n.new(&quot;ShaderNodeMixShader&quot;)
-        em.inputs[&quot;Color&quot;].default_value = (1,1,1,1); em.inputs[&quot;Strength&quot;].default_value = 5.0
+        em.inputs[&quot;Color&quot;].default_value = (1.0, 1.0, 1.0, 1.0)
+        em.inputs[&quot;Strength&quot;].default_value = 5.0
         mx.inputs[0].default_value = 0.0
-        l.new(tr.outputs[&quot;BSDF&quot;], mx.inputs[1]); l.new(em.outputs[&quot;Emission&quot;], mx.inputs[2])
+        l.new(tr.outputs[&quot;BSDF&quot;], mx.inputs[1])
+        l.new(em.outputs[&quot;Emission&quot;], mx.inputs[2])
         l.new(mx.outputs[&quot;Shader&quot;], o.inputs[&quot;Surface&quot;])
-        txt.data.materials.append(m); label_nodes[pname] = mx
-    for (pname, bs, be) in blocks:
+        txt.data.materials.append(m)
+        label_nodes[pname] = mx
+
+    for (pname, b_start, b_end) in blocks:
         mx = label_nodes[pname]
         mx.inputs[0].default_value = 0.0
         mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=1)
-        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=bs+5)
+        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=b_start + 5)
         mx.inputs[0].default_value = 1.0
-        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=bs+20)
-        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=be-20)
+        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=b_start + 20)
+        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=b_end - 20)
         mx.inputs[0].default_value = 0.0
-        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=be-2)
+        mx.inputs[0].keyframe_insert(data_path=&quot;default_value&quot;, frame=b_end - 2)
 
 # ============================================================
 # CAMERA
 # ============================================================
-def setup_camera(planets):
-    cf = add_anchor(&quot;CameraFocus&quot;); cr = add_anchor(&quot;CameraRig&quot;)
-    bpy.ops.object.camera_add(location=(0,-150,40))
-    cam = bpy.context.active_object; cam.name = &quot;MainCamera&quot;
-    bpy.context.scene.camera = cam; cam.parent = cr
-    cam.data.dof.use_dof = True
-    cam.data.dof.focus_object = bpy.data.objects.get(&quot;CameraFocus&quot;)
-    cam.data.dof.aperture_fstop = 2.8; cam.data.dof.aperture_blades = 6
-    cam.data.lens = 50
-    t = cam.constraints.new(type=&#x27;TRACK_TO&#x27;)
-    t.target = cf; t.track_axis = &#x27;TRACK_NEGATIVE_Z&#x27;; t.up_axis = &#x27;UP_Y&#x27;
+def setup_camera_rig(planets):
+    cam_focus = add_anchor(&quot;CameraFocus&quot;)
+    cam_rig = add_anchor(&quot;CameraRig&quot;)
+
+    bpy.ops.object.camera_add(location=(0, -150, 40))
+    cam = bpy.context.active_object
+    cam.name = &quot;MainCamera&quot;
+    bpy.context.scene.camera = cam
+    cam.parent = cam_rig
+
+    tr = cam.constraints.new(type=&#x27;TRACK_TO&#x27;)
+    tr.target = cam_focus
+    tr.track_axis = &#x27;TRACK_NEGATIVE_Z&#x27;
+    tr.up_axis = &#x27;UP_Y&#x27;
 
     targets = {&quot;Sun&quot;: bpy.data.objects.get(&quot;Sun&quot;)}
-    for row in PLANET_DATA: targets[row[0]] = planets[row[0]][&quot;planet&quot;]
+    for pname, *_ in PLANET_DATA:
+        targets[pname] = planets[pname][&quot;planet&quot;]
+
     for k, tgt in targets.items():
-        c1 = cr.constraints.new(type=&#x27;COPY_LOCATION&#x27;); c1.name = f&quot;L_{k}&quot;; c1.target = tgt; c1.influence = 0
-        c2 = cf.constraints.new(type=&#x27;COPY_LOCATION&#x27;); c2.name = f&quot;L_{k}&quot;; c2.target = tgt; c2.influence = 0
+        c1 = cam_rig.constraints.new(type=&#x27;COPY_LOCATION&#x27;)
+        c1.name = f&quot;Lock_{k}&quot;
+        c1.target = tgt
+        c1.influence = 0.0
 
-    def lock(n, f, v):
-        for o in (cr, cf):
-            c = o.constraints.get(f&quot;L_{n}&quot;); c.influence = v
-            c.keyframe_insert(data_path=&quot;influence&quot;, frame=f)
+        c2 = cam_focus.constraints.new(type=&#x27;COPY_LOCATION&#x27;)
+        c2.name = f&quot;Lock_{k}&quot;
+        c2.target = tgt
+        c2.influence = 0.0
 
-    lock(&quot;Sun&quot;,1,1); lock(&quot;Sun&quot;,200,1)
-    for row in PLANET_DATA: lock(row[0],1,0); lock(row[0],200,0)
-    cam.location = (0,-150,40); cam.keyframe_insert(data_path=&quot;location&quot;, frame=1)
-    cam.location = (40,-130,30); cam.keyframe_insert(data_path=&quot;location&quot;, frame=200)
+    def lock(name, frame, inf):
+        for o in (cam_rig, cam_focus):
+            c = o.constraints.get(f&quot;Lock_{name}&quot;)
+            c.influence = inf
+            c.keyframe_insert(data_path=&quot;influence&quot;, frame=frame)
 
-    seq = [r[0] for r in PLANET_DATA]; blk = 1000//len(seq); blocks = []; prev = &quot;Sun&quot;
-    for i, pn in enumerate(seq):
-        bs = 200+i*blk; be = 200+(i+1)*blk if i&lt;len(seq)-1 else 1200
-        blocks.append((pn, bs, be))
-        lock(prev,bs,1); lock(prev,bs+1,0); lock(pn,bs,0); lock(pn,bs+16,1); lock(pn,be,1)
-        r = planets[pn][&quot;radius&quot;]; d = max(r*14,0.8); h = max(r*2,0.2)
-        q = bs+int((be-bs)*0.5)
-        cam.location = (d,-d,h); cam.keyframe_insert(data_path=&quot;location&quot;, frame=bs+10)
-        cam.location = (d*1.2,0,h); cam.keyframe_insert(data_path=&quot;location&quot;, frame=q)
-        cam.location = (d,d,h); cam.keyframe_insert(data_path=&quot;location&quot;, frame=be)
-        cam.data.dof.aperture_fstop = 1.8 if r&gt;1 else 3.5
-        cam.data.dof.keyframe_insert(data_path=&quot;aperture_fstop&quot;, frame=bs+10)
-        cam.data.dof.aperture_fstop = 2.4
-        cam.data.dof.keyframe_insert(data_path=&quot;aperture_fstop&quot;, frame=be)
-        prev = pn
+    lock(&quot;Sun&quot;, 1, 1.0)
+    lock(&quot;Sun&quot;, 200, 1.0)
+    for pname, *_ in PLANET_DATA:
+        lock(pname, 1, 0.0)
+        lock(pname, 200, 0.0)
 
-    lock(prev,1200,1); lock(prev,1201,0)
-    lock(&quot;Sun&quot;,1200,0); lock(&quot;Sun&quot;,1240,1); lock(&quot;Sun&quot;,1400,1)
-    cam.location = (80,-80,30); cam.keyframe_insert(data_path=&quot;location&quot;, frame=1200)
-    cam.location = (0,-60,20); cam.keyframe_insert(data_path=&quot;location&quot;, frame=1400)
-    lock(&quot;Sun&quot;,1500,1)
-    cam.location = (0,-60,20); cam.keyframe_insert(data_path=&quot;location&quot;, frame=1400)
-    cam.location = (0,-250,60); cam.keyframe_insert(data_path=&quot;location&quot;, frame=1500)
-    cam.data.dof.aperture_fstop = 5.6; cam.data.dof.keyframe_insert(data_path=&quot;aperture_fstop&quot;, frame=1400)
-    cam.data.dof.aperture_fstop = 8.0; cam.data.dof.keyframe_insert(data_path=&quot;aperture_fstop&quot;, frame=1500)
-    set_interp(cr,&#x27;BEZIER&#x27;); set_interp(cf,&#x27;BEZIER&#x27;); set_interp(cam,&#x27;BEZIER&#x27;)
+    cam.location = (0, -150, 40);  cam.keyframe_insert(data_path=&quot;location&quot;, frame=1)
+    cam.location = (40, -130, 30); cam.keyframe_insert(data_path=&quot;location&quot;, frame=200)
+
+    seq = [p[0] for p in PLANET_DATA]
+    block = 1000 // len(seq)
+    blocks = []
+    prev = &quot;Sun&quot;
+
+    for i, pname in enumerate(seq):
+        bs = 200 + i * block
+        be = 200 + (i + 1) * block if i &lt; len(seq) - 1 else 1200
+        blocks.append((pname, bs, be))
+
+        lock(prev, bs, 1.0); lock(prev, bs + 1, 0.0)
+        lock(pname, bs, 0.0); lock(pname, bs + 16, 1.0); lock(pname, be, 1.0)
+
+        r = planets[pname][&quot;radius&quot;]
+
+        dist   = max(r * 14.0, 0.8)
+        height = max(r * 2.0,  0.2)
+
+        q1 = bs + int((be - bs) * 0.5)
+
+        cam.location = (dist,       -dist, height); cam.keyframe_insert(data_path=&quot;location&quot;, frame=bs + 10)
+        cam.location = (dist * 1.2,     0, height); cam.keyframe_insert(data_path=&quot;location&quot;, frame=q1)
+        cam.location = (dist,        dist, height); cam.keyframe_insert(data_path=&quot;location&quot;, frame=be)
+
+        prev = pname
+
+    lock(prev, 1200, 1.0); lock(prev, 1201, 0.0)
+
+    lock(&quot;Sun&quot;, 1200, 0.0); lock(&quot;Sun&quot;, 1240, 1.0); lock(&quot;Sun&quot;, 1500, 1.0)
+
+    cam.location = (80, -80, 30);    cam.keyframe_insert(data_path=&quot;location&quot;, frame=1200)
+    cam.location = (0, -350, 200);   cam.keyframe_insert(data_path=&quot;location&quot;, frame=1450)
+    cam.location = (0, -380, 220);   cam.keyframe_insert(data_path=&quot;location&quot;, frame=1500)
+
+    set_interp(cam_rig,   &#x27;BEZIER&#x27;)
+    set_interp(cam_focus, &#x27;BEZIER&#x27;)
+    set_interp(cam,       &#x27;BEZIER&#x27;)
+
     return cam, blocks
-
-# ============================================================
-# COMPOSITING (safe)
-# ============================================================
-def compositing():
-    try:
-        sc = bpy.context.scene
-        if not hasattr(sc, &quot;use_nodes&quot;): return
-        sc.use_nodes = True
-        tree = getattr(sc, &quot;node_tree&quot;, None)
-        if not tree: return
-        n = tree.nodes; l = tree.links; n.clear()
-        rl = n.new(&quot;CompositorNodeRLayers&quot;); rl.location = (-600,300)
-        out = n.new(&quot;CompositorNodeComposite&quot;); out.location = (800,300)
-        vw = n.new(&quot;CompositorNodeViewer&quot;); vw.location = (800,50)
-        gl = n.new(&quot;CompositorNodeGlare&quot;); gl.location = (-200,300)
-        gl.glare_type=&#x27;FOG_GLOW&#x27;; gl.quality=&#x27;HIGH&#x27;; gl.threshold=2.0; gl.size=6
-        if hasattr(gl,&quot;mix&quot;): gl.mix=0
-        cb = n.new(&quot;CompositorNodeColorBalance&quot;); cb.location = (200,300)
-        cb.correction_method=&#x27;LIFT_GAMMA_GAIN&#x27;
-        cb.lift=(0.97,0.97,1.02); cb.gamma=(1,1,1); cb.gain=(1.02,1,0.98)
-        ld = n.new(&quot;CompositorNodeLensdist&quot;); ld.location = (450,300)
-        ld.inputs[&quot;Distort&quot;].default_value=0; ld.inputs[&quot;Dispersion&quot;].default_value=0.005
-        ve = n.new(&quot;CompositorNodeEllipseMask&quot;); ve.location=(0,-100); ve.width=0.85; ve.height=0.85
-        vb = n.new(&quot;CompositorNodeBlur&quot;); vb.location=(200,-100); vb.size_x=180; vb.size_y=180
-        vm = n.new(&quot;CompositorNodeMixRGB&quot;); vm.location=(600,300)
-        vm.blend_type=&#x27;MULTIPLY&#x27;; vm.inputs[0].default_value=0.35
-        l.new(rl.outputs[&quot;Image&quot;],gl.inputs[&quot;Image&quot;])
-        l.new(gl.outputs[&quot;Image&quot;],cb.inputs[&quot;Image&quot;])
-        l.new(cb.outputs[&quot;Image&quot;],ld.inputs[&quot;Image&quot;])
-        l.new(ld.outputs[&quot;Image&quot;],vm.inputs[1])
-        l.new(ve.outputs[&quot;Mask&quot;],vb.inputs[&quot;Image&quot;])
-        l.new(vb.outputs[&quot;Image&quot;],vm.inputs[2])
-        l.new(vm.outputs[&quot;Image&quot;],out.inputs[&quot;Image&quot;])
-        l.new(vm.outputs[&quot;Image&quot;],vw.inputs[&quot;Image&quot;])
-    except Exception as e:
-        print(f&quot;  Compositing skipped: {e}&quot;)
 
 # ============================================================
 # MAIN
 # ============================================================
 def launch():
-    print(&quot;=&quot;*60)
-    print(&quot;[1/7] Environment...&quot;); build_environment()
-    print(&quot;[2/7] Solar system...&quot;); planets = build_system()
-    print(&quot;[3/7] Orbits...&quot;); render_orbits()
-    print(&quot;[4/7] Asteroids...&quot;); place_asteroids()
-    print(&quot;[5/7] Animation...&quot;); animate(planets)
-    print(&quot;[6/7] Camera...&quot;); cam, blocks = setup_camera(planets)
-    print(&quot;[6b] Labels...&quot;); add_labels(planets, cam, blocks)
-    print(&quot;[7/7] Compositing...&quot;); compositing()
+    print(&quot;[1/5] Scene&quot;)
+    build_environment()
+    print(&quot;[2/5] System&quot;)
+    planets = build_system()
+    print(&quot;[2b/5] Orbit lines&quot;)
+    render_orbit_lines()
+    print(&quot;[2c/5] Asteroids&quot;)
+    place_debris()
+    print(&quot;[3/5] Motion&quot;)
+    run_motion(planets)
+    print(&quot;[4/5] Camera&quot;)
+    cam, blocks = setup_camera_rig(planets)
+    print(&quot;[5/5] Labels&quot;)
+    add_name_tags(planets, cam, blocks)
     bpy.context.scene.frame_set(1)
     bpy.context.view_layer.update()
-    print(&quot;=&quot;*60)
-    print(&quot;  DONE â€“ Z &gt; Rendered to preview&quot;)
-    print(&quot;  SPACE to play animation&quot;)
-    print(&quot;=&quot;*60)
+    print(&quot;Done. Press SPACE to preview.&quot;)
 
 launch()</code></pre>
                             </div>
