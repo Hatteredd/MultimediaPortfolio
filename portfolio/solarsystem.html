@@ -73,34 +73,8 @@
 
     <section class="solar-hero-section">
         <div class="solar-hero-container">
-            <div class="solar-hero-placeholder d-flex align-items-center justify-content-center solar-hero-bg" style="position: relative;">
-                <video id="mainVideo" src="../videos/Final Video.mp4" style="width:100%; height:100%; border:none; border-radius: 16px; object-fit: cover;" playsinline></video>
-                <!-- Custom Controls Overlay -->
-                <div class="video-controls-overlay" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; padding: 20px;">
-                    <!-- Progress Bar -->
-                    <div class="progress-bar-container" style="width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; cursor: pointer; margin-bottom: 12px;">
-                        <div id="progressBar" class="progress-bar-fill" style="height: 100%; background: linear-gradient(90deg, #ff7e5f, #feb47b); border-radius: 4px; width: 0%;"></div>
-                    </div>
-                    <!-- Controls -->
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-3">
-                            <button id="playBtn" style="background: white; border: none; border-radius: 50%; width: 48px; height: 48px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                                <svg id="playIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                            </button>
-                            <div class="d-flex align-items-center gap-2">
-                                <button id="rewindBtn" style="background: transparent; border: 2px solid white; color: white; border-radius: 8px; padding: 8px 12px; cursor: pointer;">-10s</button>
-                                <button id="forwardBtn" style="background: transparent; border: 2px solid white; color: white; border-radius: 8px; padding: 8px 12px; cursor: pointer;">+10s</button>
-                            </div>
-                            <div style="color: white; font-family: monospace;">
-                                <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                            <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" style="width: 100px;">
-                        </div>
-                    </div>
-                </div>
+            <div class="solar-hero-placeholder d-flex align-items-center justify-content-center solar-hero-bg">
+                <video id="mainVideo" src="../videos/Final Video.mp4" controls style="width:100%; height:100%; border:none; border-radius: 16px; object-fit: cover;" playsinline></video>
             </div>
             <div class="solar-hero-overlay">
                 <span class="solar-hero-label">Interactive Simulation</span>
