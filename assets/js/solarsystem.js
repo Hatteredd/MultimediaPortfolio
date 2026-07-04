@@ -335,32 +335,3 @@ function updateOrbitalData() {
 }
 
 document.addEventListener('DOMContentLoaded', initSolarSystem);
-
-// Optional: Keep keyboard shortcuts even with native controls
-document.addEventListener('keydown', function(e) {
-    const video = document.getElementById('mainVideo');
-    if (!video) return;
-
-    switch(e.key) {
-        case 'ArrowLeft':
-            video.currentTime = Math.max(0, video.currentTime - 5);
-            break;
-        case 'ArrowRight':
-            video.currentTime = Math.min(video.duration, video.currentTime + 5);
-            break;
-        case ' ':
-            e.preventDefault();
-            if (video.paused) {
-                video.play();
-            } else {
-                video.pause();
-            }
-            break;
-        case 'ArrowUp':
-            video.volume = Math.min(1, video.volume + 0.1);
-            break;
-        case 'ArrowDown':
-            video.volume = Math.max(0, video.volume - 0.1);
-            break;
-    }
-});
