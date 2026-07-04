@@ -334,33 +334,100 @@ function updateOrbitalData() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', initSolarSystem);
+document.addEventListener('DOMContentLoaded', function() {
+    initSolarSystem();
+    initVideoControls();
+});
 
-// Video keyboard controls
-document.addEventListener('keydown', function(e) {
-    const video = document.querySelector('video');
+// Video custom controls
+function initVideoControls() {
+    const video = document.getElementById('mainVideo');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const rewindBtn = document.getElementById('rewindBtn');
+    const forwardBtn = document.getElementById('forwardBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.querySelector('.progress-bar-container');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationEl = document.getElementById('duration');
+    const volumeSlider = document.getElementById('volumeSlider');
+
     if (!video) return;
 
-    switch(e.key) {
-        case 'ArrowLeft':
-            video.currentTime = Math.max(0, video.currentTime - 5);
-            break;
-        case 'ArrowRight':
-            video.currentTime = Math.min(video.duration, video.currentTime + 5);
-            break;
-        case ' ':
-            e.preventDefault();
-            if (video.paused) {
-                video.play();
-            } else {
-                video.pause();
-            }
-            break;
-        case 'ArrowUp':
-            video.volume = Math.min(1, video.volume + 0.1);
-            break;
-        case 'ArrowDown':
-            video.volume = Math.max(0, video.volume - 0.1);
-            break;
+    // Format time helper
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
-});
+
+    // Play/Pause
+    playBtn.addEventListener('click', togglePlayPause);
+    video.addEventListener('click', togglePlayPause);
+
+    function togglePlayPause() {
+        if (video.paused) {
+            video.play();
+            playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+        } else {
+            video.pause();
+            playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        }
+    }
+
+    // Rewind/Forward
+    rewindBtn.addEventListener('click', () => {
+        video.currentTime = Math.max(0, video.currentTime - 10);
+    });
+    forwardBtn.addEventListener('click', () => {
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    });
+
+    // Progress bar
+    video.addEventListener('timeupdate', updateProgress);
+    video.addEventListener('loadedmetadata', () => {
+        durationEl.textContent = formatTime(video.duration);
+    });
+
+    function updateProgress() {
+        const percent = (video.currentTime / video.duration) * 100;
+        progressBar.style.width = `${percent}%`;
+        currentTimeEl.textContent = formatTime(video.currentTime);
+    }
+
+    // Click to seek
+    progressContainer.addEventListener('click', (e) => {
+        const rect = progressContainer.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        video.currentTime = percent * video.duration;
+    });
+
+    // Volume
+    volumeSlider.addEventListener('input', (e) => {
+        video.volume = e.target.value;
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        switch(e.key) {
+            case 'ArrowLeft':
+                video.currentTime = Math.max(0, video.currentTime - 5);
+                break;
+            case 'ArrowRight':
+                video.currentTime = Math.min(video.duration, video.currentTime + 5);
+                break;
+            case ' ':
+                e.preventDefault();
+                togglePlayPause();
+                break;
+            case 'ArrowUp':
+                video.volume = Math.min(1, video.volume + 0.1);
+                volumeSlider.value = video.volume;
+                break;
+            case 'ArrowDown':
+                video.volume = Math.max(0, video.volume - 0.1);
+                volumeSlider.value = video.volume;
+                break;
+        }
+    });
+}
