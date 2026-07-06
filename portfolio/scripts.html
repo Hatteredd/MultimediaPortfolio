@@ -222,6 +222,8 @@
                             <a class="nav-link" href="#uranus">Uranus</a>
                             <a class="nav-link" href="#neptune">Neptune</a>
                             <a class="nav-link" href="#pluto">Pluto</a>
+                            <a class="nav-link" href="#moon">Moon</a>
+                            <div class="divider-light"></div>
                             <a class="nav-link" href="#full-solar-system">Full Solar System</a>
                         </div>
                     </li>
@@ -256,6 +258,7 @@
                     <a href="#uranus" class="planet-nav-item">Uranus</a>
                     <a href="#neptune" class="planet-nav-item">Neptune</a>
                     <a href="#pluto" class="planet-nav-item">Pluto</a>
+                    <a href="#moon" class="planet-nav-item">Moon</a>
                     <a href="#full-solar-system" class="planet-nav-item">Full Solar System</a>
                 </aside>
 
@@ -1464,6 +1467,117 @@ for i, data in enumerate(moons_config):
         pivot.rotation_euler[0] = math.radians(122.5) 
 
 print("Lighting fixed and wider orbits restored! Press Spacebar to play.")</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Moon Script -->
+                    <div id="moon" class="script-content">
+                        <div class="script-header">
+                            <h2 class="m-0">Moon Automation</h2>
+                            <span class="tag">PYTHON 3.10+</span>
+                        </div>
+                        <p class="muted fs-09">Automates the procedural rotation, lighting setup, and camera placement for the Moon animation.</p>
+                        <div class="code-window">
+                            <div class="code-header">
+                                <div class="code-dots">
+                                    <div class="dot dot-red"></div>
+                                    <div class="dot dot-yellow"></div>
+                                    <div class="dot dot-green"></div>
+                                </div>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="muted-2 fs-xs mono">moon_automation.py</span>
+                                    <div class="code-actions position-relative">
+                                        <button class="action-btn" onclick="copyCode(this)" title="Copy Code">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                            <span>COPY</span>
+                                        </button>
+                                        <button class="action-btn" onclick="downloadCode(this, 'moon_automation.py')" title="Download Script">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                            <span>DOWNLOAD</span>
+                                        </button>
+                                        <div class="copy-feedback">COPIED!</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 overflow-auto" style="max-height: 500px; font-family: var(--font-mono); font-size: 0.85rem;">
+<pre class="m-0"><code class="language-python">import bpy
+import math
+
+def setup_moon_scene():
+    # 1. Get the Moon object 
+    moon = bpy.data.objects.get("Moon")
+    
+    if not moon:
+        print("Error: Object named 'Moon' not found!")
+        return
+
+    # 2. Place the moon perfectly in the center
+    moon.location = (0.0, 0.0, 0.0)
+    
+    # 3. Setup the Moon's rotation for exactly 15 seconds
+    moon.animation_data_clear() 
+    moon.rotation_mode = 'XYZ'
+    
+    fps = bpy.context.scene.render.fps
+    fps_base = bpy.context.scene.render.fps_base
+    actual_fps = fps / fps_base
+    total_frames = int(actual_fps * 15)
+    
+    bpy.context.scene.frame_start = 1
+    bpy.context.scene.frame_end = total_frames
+    
+    moon.rotation_euler = (0, 0, 0)
+    moon.keyframe_insert(data_path="rotation_euler", index=2, frame=1)
+    
+    moon.rotation_euler = (0, 0, math.radians(360))
+    moon.keyframe_insert(data_path="rotation_euler", index=2, frame=total_frames + 1) 
+    
+    # Make the rotation constant
+    if moon.animation_data and moon.animation_data.action:
+        action = moon.animation_data.action
+        if hasattr(action, 'fcurves'):
+            for fcurve in action.fcurves:
+                if fcurve.data_path == 'rotation_euler':
+                    for kf in fcurve.keyframe_points:
+                        kf.interpolation = 'LINEAR'
+        elif hasattr(action, 'fcurve_ensure_for_datablock'):
+            fcurve = action.fcurve_ensure_for_datablock(datablock=moon, data_path="rotation_euler", index=2)
+            if fcurve:
+                for kf in fcurve.keyframe_points:
+                    kf.interpolation = 'LINEAR'
+
+    # 4. Set up the Camera (ZOOMED OUT A BIT)
+    camera = bpy.data.objects.get("Camera")
+    if camera:
+        bpy.context.scene.camera = camera
+        camera.rotation_mode = 'XYZ'
+        camera.rotation_euler = (math.radians(90), 0, 0)
+        # Changed from -5.0 to -7.5 to give it some breathing room
+        camera.location = (0.0, -7.5, 0.0) 
+        
+    # 5. Make the space background pitch black
+    world = bpy.context.scene.world
+    if world and world.use_nodes:
+        bg_node = world.node_tree.nodes.get('Background')
+        if bg_node:
+            bg_node.inputs[0].default_value = (0, 0, 0, 1) 
+            
+    # 6. Set up the Light
+    light = bpy.data.objects.get("Light")
+    if light:
+        # Move light back with the camera
+        light.location = (0.0, -7.5, 0.0)
+        light.rotation_mode = 'XYZ'
+        light.rotation_euler = (math.radians(90), 0, 0)
+        
+        if hasattr(light.data, 'energy'):
+            if light.data.type == 'POINT':
+                light.data.energy = 5000 
+            elif light.data.type == 'SUN':
+                light.data.energy = 5    
+
+setup_moon_scene()</code></pre>
                             </div>
                         </div>
                     </div>

@@ -1,0 +1,1178 @@
+import bpy
+import bmesh
+import math
+import os
+import random
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+TEXTURE_DIR = r"D:\MultimediaPortfolio\planets jpg"
+RENDER_ENGINE = "BLENDER_EEVEE"
+RESOLUTION_X = 1920
+RESOLUTION_Y = 1080
+FRAME_START = 1
+FRAME_END = 1500
+
+PLANET_UNLIT_STRENGTH = 1.5
+ASTEROID_STRENGTH = 4.0
+
+SCENE_EXPOSURE = 0.75
+SUN_POINT_ENERGY = 100000.0
+SUN_RADIUS_FALLBACK = 8.0
+MAKE_PLANETS_UNLIT = True
+PLANET_UNLIT_STRENGTH_OVERRIDES = {}
+
+SUN_OBJECT_NAME = "The Sun"
+
+# ---- PERFORMANCE SETTINGS ----
+# All of these were added/tuned for speed. The visual result is
+# effectively identical because every planet/moon/asteroid uses a
+# pure Emission shader, so realistic shadowing was never doing much
+# for us in the first place.
+USE_BLOOM = True
+EEVEE_RENDER_SAMPLES = 16          # was 64 - nearly identical look, ~4x faster
+USE_MOTION_BLUR = False            # huge render cost for very little visible benefit at this scale; flip to True if you want it back
+MOTION_BLUR_SHUTTER = 0.4
+USE_SOFT_SHADOWS = False           # soft shadows are wasted on emissive geometry
+SHADOW_CUBE_SIZE = '512'           # was '1024' - shadow map res doesn't matter much when almost nothing casts one
+DISABLE_SHADOWS_ON_EMISSIVE = True # skip shadow casting entirely for planets/moon/asteroids (they're self-lit)
+
+ASTEROID_COUNT = 600
+ASTEROID_SELF_SPIN = False         # per-asteroid tumble animation. Disabling this removes ~3600 keyframes / fcurves
+                                    # from the depsgraph. Each asteroid still gets a random static orientation, and
+                                    # the whole belt still rotates as one (via AsteroidField_Root), so the field
+                                    # reads the same at a glance while evaluating vastly cheaper per frame.
+
+PLANET_OBJECT_NAMES = {
+    "Mercury": "Mercury",
+    "Venus":   "Venus.001",
+    "Earth":   "NASA Earth 21600x10800",
+    "Mars":    "Mars",
+    "Jupiter": "Jupiter",
+    "Saturn":  "Saturn",
+    "Uranus":  "Uranus",
+    "Neptune": "Neptune",
+    "Pluto":   "Makemake",
+}
+
+PLANET_DATA = [
+    ("Mercury", 12,  88,    58,   0.03),
+    ("Venus",   18,  225,   243,  177.4),
+    ("Earth",   25,  365,   1,    23.4),
+    ("Mars",    34,  687,   1.03, 25.2),
+    ("Jupiter", 55,  4333,  0.41, 3.1),
+    ("Saturn",  80,  10759, 0.45, 26.7),
+    ("Uranus",  105, 30688, 0.72, 97.8),
+    ("Neptune", 125, 60182, 0.67, 28.3),
+    ("Pluto",   150, 90560, 6.39, 122.5),
+]
+
+SPEED_SCALE = 1.5
+
+# ============================================================
+# UTILITIES
+# ============================================================
+def resolve_asset_path(filename):
+    return os.path.join(TEXTURE_DIR, filename)
+
+def set_interp(obj, mode='BEZIER'):
+    ad = getattr(obj, "animation_data", None)
+    if not ad: return
+    act = getattr(ad, "action", None)
+    if not act: return
+    fcurves = getattr(act, "fcurves", None)
+    if not fcurves: return
+    for fc in fcurves:
+        for kf in fc.keyframe_points:
+            kf.interpolation = mode
+
+def get_object(name, label="object"):
+    if not name:
+        return None
+    obj = bpy.data.objects.get(name)
+    if obj is None:
+        print(f"[WARN] Could not find {label} named '{name}' in the scene.")
+    return obj
+
+def object_radius(obj):
+    if obj is None:
+        return 1.0
+    dims = obj.dimensions
+    r = max(dims.x, dims.y, dims.z) / 2.0
+    return r if r > 0 else 1.0
+
+def set_no_shadow(obj):
+    """Skip shadow casting/receiving for an object. Cheap to set, and a real
+    render-time win for emissive objects (planets, moon, asteroids) that
+    don't benefit from realistic shadowing anyway."""
+    if obj is None or not DISABLE_SHADOWS_ON_EMISSIVE:
+        return
+    if hasattr(obj, "visible_shadow"):
+        obj.visible_shadow = False
+
+def find_planet_mesh(root_obj):
+    if root_obj is None:
+        return None
+    if root_obj.type == 'MESH':
+        return root_obj
+
+    mesh_children = [c for c in root_obj.children if c.type == 'MESH']
+    if not mesh_children:
+        return None
+
+    for c in mesh_children:
+        if c.name.lower().startswith("actual"):
+            return c
+
+    surface_keywords = ("land", "surface", "ground", "core")
+    exclude_keywords = ("atmos", "cloud", "ring", "halo", "glow")
+
+    surface_candidates = [c for c in mesh_children if any(k in c.name.lower() for k in surface_keywords)]
+    if surface_candidates:
+        return surface_candidates[0]
+
+    non_atmos_candidates = [c for c in mesh_children if not any(k in c.name.lower() for k in exclude_keywords)]
+    if non_atmos_candidates:
+        return min(non_atmos_candidates, key=lambda o: max(o.dimensions))
+
+    return min(mesh_children, key=lambda o: max(o.dimensions))
+
+PLANET_TARGET_RADIUS = {
+    "Mercury": 0.22,
+    "Venus":   0.56,
+    "Earth":   0.60,
+    "Mars":    0.32,
+    "Jupiter": 4.00,
+    "Saturn":  3.50,
+    "Uranus":  1.80,
+    "Neptune": 1.70,
+    "Pluto":   0.12,
+}
+
+def apply_target_radius(root_obj, mesh_obj, target_radius):
+    if root_obj is None or mesh_obj is None or not target_radius:
+        return
+    current_radius = object_radius(mesh_obj)
+    if current_radius <= 0:
+        return
+    factor = target_radius / current_radius
+    root_obj.scale = (root_obj.scale.x * factor, root_obj.scale.y * factor, root_obj.scale.z * factor)
+
+# ============================================================
+# CLEANUP
+# ============================================================
+GENERATED_PREFIXES = (
+    "Orbit_", "Asteroid_", "AsteroidField_Root", "Moon", "Satellite_",
+    "LabelRig_", "Label_", "CameraRig", "CameraFocus", "MainCamera", "Sun_Point",
+    "Sun_Pivot"
+)
+GENERATED_SUFFIXES = ("_Pivot", "_Inclination", "_Spin", "_Label")
+
+GENERATED_MAT_PREFIXES = (
+    "Moon_Mat", "Asteroid_Mat", "SAT_", "Orbit_Line_Mat", "Label_",
+)
+
+def cleanup_previous_generated():
+    # We now aggressively target ANY leftover FONT objects to clear orphaned text.
+    to_remove = [
+        obj for obj in bpy.data.objects
+        if obj.name.startswith(GENERATED_PREFIXES) or
+           obj.name.endswith(GENERATED_SUFFIXES) or
+           obj.type == 'FONT'
+    ]
+    for obj in to_remove:
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+    for prefix in GENERATED_MAT_PREFIXES:
+        for mat in list(bpy.data.materials):
+            if mat.name.startswith(prefix):
+                bpy.data.materials.remove(mat, do_unlink=True)
+
+    # NOTE: shared unit meshes (SAT_UnitCube_Mesh / SAT_UnitCyl_Mesh) and the
+    # shared Asteroid_Mesh are intentionally NOT removed here - they're reused
+    # across runs instead of piling up orphan ".001" data every re-run.
+
+# ============================================================
+# SCENE SETUP
+# ============================================================
+def build_environment():
+    cleanup_previous_generated()
+
+    scene = bpy.context.scene
+    scene.frame_start = FRAME_START
+    scene.frame_end = FRAME_END
+    scene.render.engine = RENDER_ENGINE
+    scene.render.resolution_x = RESOLUTION_X
+    scene.render.resolution_y = RESOLUTION_Y
+    scene.render.film_transparent = False
+
+    scene.render.use_motion_blur = USE_MOTION_BLUR
+    if USE_MOTION_BLUR:
+        scene.render.motion_blur_shutter = MOTION_BLUR_SHUTTER
+
+    try:
+        scene.view_settings.view_transform = 'Standard'
+        scene.view_settings.look = 'High Contrast'
+        scene.view_settings.exposure = SCENE_EXPOSURE
+    except Exception:
+        pass
+
+    if scene.render.engine == "BLENDER_EEVEE":
+        eevee = scene.eevee
+        if hasattr(eevee, "use_gtao"): eevee.use_gtao = False
+        if hasattr(eevee, "use_bloom"):
+            eevee.use_bloom = USE_BLOOM
+            if hasattr(eevee, "bloom_intensity"): eevee.bloom_intensity = 0.8
+            if hasattr(eevee, "bloom_threshold"): eevee.bloom_threshold = 1.1
+            if hasattr(eevee, "bloom_radius"): eevee.bloom_radius = 8.0
+        if hasattr(eevee, "use_ssr"): eevee.use_ssr = False
+        if hasattr(eevee, "use_soft_shadows"): eevee.use_soft_shadows = USE_SOFT_SHADOWS
+        if hasattr(eevee, "shadow_cube_size"): eevee.shadow_cube_size = SHADOW_CUBE_SIZE
+        if hasattr(eevee, "taa_render_samples"): eevee.taa_render_samples = EEVEE_RENDER_SAMPLES
+
+    build_star_background()
+
+def build_star_background():
+    world = bpy.data.worlds.get("World")
+    if world is None:
+        world = bpy.data.worlds.new("World")
+    scene = bpy.context.scene
+    scene.world = world
+    world.use_nodes = True
+    wnt = world.node_tree
+    wnt.nodes.clear()
+
+    out = wnt.nodes.new("ShaderNodeOutputWorld")
+    out.location = (500, 0)
+
+    bg = wnt.nodes.new("ShaderNodeBackground")
+    bg.location = (300, 0)
+    bg.inputs["Strength"].default_value = 1.0
+
+    v1 = wnt.nodes.new("ShaderNodeTexVoronoi")
+    v1.location = (-400, 150)
+    v1.inputs["Scale"].default_value = 120.0
+
+    r1 = wnt.nodes.new("ShaderNodeValToRGB")
+    r1.location = (-150, 150)
+    r1.color_ramp.elements[0].position = 0.0
+    r1.color_ramp.elements[0].color = (1.0, 1.0, 1.0, 1.0)
+    r1.color_ramp.elements[1].position = 0.015
+    r1.color_ramp.elements[1].color = (0.0, 0.0, 0.0, 1.0)
+    r1.color_ramp.interpolation = 'EASE'
+
+    v2 = wnt.nodes.new("ShaderNodeTexVoronoi")
+    v2.location = (-400, -100)
+    v2.inputs["Scale"].default_value = 400.0
+
+    r2 = wnt.nodes.new("ShaderNodeValToRGB")
+    r2.location = (-150, -100)
+    r2.color_ramp.elements[0].position = 0.0
+    r2.color_ramp.elements[0].color = (0.4, 0.4, 0.4, 1.0)
+    r2.color_ramp.elements[1].position = 0.01
+    r2.color_ramp.elements[1].color = (0.0, 0.0, 0.0, 1.0)
+    r2.color_ramp.interpolation = 'EASE'
+
+    mix = wnt.nodes.new("ShaderNodeMixRGB")
+    mix.location = (100, 0)
+    mix.blend_type = 'ADD'
+    mix.inputs[0].default_value = 1.0
+
+    wnt.links.new(v1.outputs["Distance"], r1.inputs["Fac"])
+    wnt.links.new(v2.outputs["Distance"], r2.inputs["Fac"])
+    wnt.links.new(r1.outputs["Color"], mix.inputs[1])
+    wnt.links.new(r2.outputs["Color"], mix.inputs[2])
+
+    math_node = wnt.nodes.new("ShaderNodeMath")
+    math_node.location = (150, -200)
+    math_node.operation = 'MULTIPLY'
+    math_node.inputs[1].default_value = 2.5
+
+    wnt.links.new(mix.outputs["Color"], math_node.inputs[0])
+    wnt.links.new(math_node.outputs["Value"], bg.inputs["Color"])
+    wnt.links.new(bg.outputs["Background"], out.inputs["Surface"])
+
+# ============================================================
+# MATERIALS
+# ============================================================
+def make_surface_shader(name, texture_path, fallback_color=(0.5, 0.5, 0.5, 1.0), strength=1.5):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new("ShaderNodeOutputMaterial")
+    out.location = (500, 0)
+
+    principled = nodes.new("ShaderNodeBsdfPrincipled")
+    principled.location = (300, 0)
+
+    def set_val(n, v):
+        inp = principled.inputs.get(n)
+        if inp is not None:
+            inp.default_value = v
+
+    set_val("Base Color", (0, 0, 0, 1))
+    set_val("Specular", 0.0)
+    set_val("Specular IOR Level", 0.0)
+    set_val("Roughness", 1.0)
+    set_val("Metallic", 0.0)
+
+    em_color = principled.inputs.get("Emission Color") or principled.inputs.get("Emission")
+    em_strength = principled.inputs.get("Emission Strength")
+    if em_strength:
+        em_strength.default_value = strength
+
+    img = nodes.new("ShaderNodeTexImage")
+    img.location = (-200, 0)
+
+    coord = nodes.new("ShaderNodeTexCoord")
+    coord.location = (-400, 0)
+    links.new(coord.outputs["UV"], img.inputs["Vector"])
+
+    loaded = False
+    if texture_path and os.path.exists(texture_path):
+        try:
+            img.image = bpy.data.images.load(texture_path, check_existing=True)
+            loaded = True
+        except Exception:
+            pass
+
+    if loaded:
+        if em_color: links.new(img.outputs["Color"], em_color)
+    else:
+        if em_color: em_color.default_value = fallback_color
+
+    links.new(principled.outputs["BSDF"], out.inputs["Surface"])
+    return mat
+
+def make_solid_mat(name, color=(0.8, 0.8, 0.8, 1.0)):
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new("ShaderNodeOutputMaterial")
+    out.location = (300, 0)
+
+    principled = nodes.new("ShaderNodeBsdfPrincipled")
+    principled.location = (100, 0)
+
+    def set_val(n, v):
+        inp = principled.inputs.get(n)
+        if inp is not None:
+            inp.default_value = v
+
+    set_val("Base Color", color)
+    set_val("Metallic", 0.85)
+    set_val("Roughness", 0.20)
+    set_val("Specular", 1.0)
+    set_val("Specular IOR Level", 1.0)
+
+    em_color_input = principled.inputs.get("Emission Color") or principled.inputs.get("Emission")
+    em_strength_input = principled.inputs.get("Emission Strength")
+
+    if em_color_input:
+        em_color_input.default_value = color
+    if em_strength_input:
+        em_strength_input.default_value = 0.05
+
+    links.new(principled.outputs["BSDF"], out.inputs["Surface"])
+    return mat
+
+def make_planet_unlit(obj, strength=PLANET_UNLIT_STRENGTH):
+    if obj is None or not obj.data.materials:
+        return
+
+    for mat in obj.data.materials:
+        if mat is None or not mat.use_nodes:
+            continue
+        nodes = mat.node_tree.nodes
+        links = mat.node_tree.links
+
+        principled = next((n for n in nodes if n.type == 'BSDF_PRINCIPLED'), None)
+        if principled is None:
+            continue
+
+        base_color_input = principled.inputs.get("Base Color")
+        emission_color_input = principled.inputs.get("Emission Color") or principled.inputs.get("Emission")
+        emission_strength_input = principled.inputs.get("Emission Strength")
+
+        if emission_color_input is not None and base_color_input is not None:
+            if base_color_input.is_linked:
+                source_socket = base_color_input.links[0].from_socket
+                links.new(source_socket, emission_color_input)
+                for link in list(base_color_input.links):
+                    links.remove(link)
+            else:
+                emission_color_input.default_value = base_color_input.default_value
+
+            base_color_input.default_value = (0.0, 0.0, 0.0, 1.0)
+
+            if emission_strength_input is not None:
+                if emission_strength_input.is_linked:
+                    for link in list(emission_strength_input.links):
+                        links.remove(link)
+                emission_strength_input.default_value = strength
+
+        def kill_input(name, float_val):
+            inp = principled.inputs.get(name)
+            if inp is not None:
+                if inp.is_linked:
+                    for link in list(inp.links):
+                        links.remove(link)
+                try:
+                    inp.default_value = float_val
+                except Exception:
+                    pass
+
+        kill_input("Specular", 0.0)
+        kill_input("Specular IOR Level", 0.0)
+        kill_input("Roughness", 1.0)
+        kill_input("Metallic", 0.0)
+        kill_input("Clearcoat", 0.0)
+
+    # Emission-shaded surfaces don't need realistic shadowing - skip it for speed.
+    set_no_shadow(obj)
+
+def make_planet_unlit_recursive(obj, strength=PLANET_UNLIT_STRENGTH):
+    if obj is None: return
+    if obj.type == 'MESH':
+        name_low = obj.name.lower()
+        if any(k in name_low for k in ("atmos", "halo", "glow", "cloud")):
+            obj.hide_render = True
+            obj.hide_viewport = True
+        else:
+            make_planet_unlit(obj, strength=strength)
+    for c in obj.children:
+        make_planet_unlit_recursive(c, strength=strength)
+
+# ============================================================
+# OBJECT HELPERS
+# ============================================================
+def add_globe(name, radius, location=(0,0,0), segments=64, rings=32):
+    mesh = bpy.data.meshes.new(name)
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+
+    bm = bmesh.new()
+    try:
+        bmesh.ops.create_uvsphere(bm, u_segments=segments, v_segments=rings, radius=radius, calc_uvs=True)
+    except Exception:
+        bmesh.ops.create_uvsphere(bm, u_segments=segments, v_segments=rings, radius=radius)
+    bm.to_mesh(mesh)
+    bm.free()
+
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+    obj.location = location
+    return obj
+
+def add_anchor(name, location=(0,0,0)):
+    obj = bpy.data.objects.new(name, None)
+    obj.empty_display_type = 'PLAIN_AXES'
+    obj.location = location
+    bpy.context.collection.objects.link(obj)
+    return obj
+
+# ============================================================
+# INLINE SATELLITE BUILDER
+# ============================================================
+def get_or_create_unit_cube_mesh():
+    """Single shared unit-cube mesh datablock, reused for every cuboid part of
+    the satellite (body, nose, arms, panels). Each object just scales it
+    differently via obj.scale, instead of every part carrying its own copy
+    of the geometry."""
+    mesh = bpy.data.meshes.get("SAT_UnitCube_Mesh")
+    if mesh is None:
+        mesh = bpy.data.meshes.new("SAT_UnitCube_Mesh")
+        bm = bmesh.new()
+        bmesh.ops.create_cube(bm, size=1.0)
+        bm.to_mesh(mesh)
+        bm.free()
+    return mesh
+
+def get_or_create_unit_cylinder_mesh():
+    """Single shared unit-cylinder mesh (radius=1, depth=1), reused for both
+    the mast and the dish; the differing radius/depth is applied per-object
+    via obj.scale instead of baking separate geometry for each."""
+    mesh = bpy.data.meshes.get("SAT_UnitCyl_Mesh")
+    if mesh is None:
+        mesh = bpy.data.meshes.new("SAT_UnitCyl_Mesh")
+        bm = bmesh.new()
+        bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=32, radius1=1.0, radius2=1.0, depth=1.0)
+        bm.to_mesh(mesh)
+        bm.free()
+        for poly in mesh.polygons:
+            poly.use_smooth = True
+    return mesh
+
+def generate_satellite_in_scene(orbit_r, pivot_obj, scale_factor):
+    root = add_anchor("Satellite_Root", location=(0,0,0))
+
+    mat_body  = make_solid_mat("SAT_Body_Mat",  color=(0.75, 0.77, 0.80, 1))
+    mat_panel = make_solid_mat("SAT_Panel_Mat", color=(0.02, 0.05, 0.15, 1))
+    mat_frame = make_solid_mat("SAT_Frame_Mat", color=(0.15, 0.15, 0.16, 1))
+    mat_dish  = make_solid_mat("SAT_Dish_Mat",  color=(0.85, 0.85, 0.86, 1))
+
+    def new_cube(name, size, loc):
+        mesh = get_or_create_unit_cube_mesh()
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.scale = size
+        obj.location = loc
+        return obj
+
+    def new_cyl(name, radius, depth, loc, rot=(0,0,0)):
+        mesh = get_or_create_unit_cylinder_mesh()
+        obj = bpy.data.objects.new(name, mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.scale = (radius, radius, depth)
+        obj.location = loc
+        obj.rotation_euler = rot
+        return obj
+
+    body    = new_cube("SAT_Body",   size=(0.55, 0.35, 0.30), loc=(0, 0, 0));          body.data.materials.append(mat_body);   body.parent = root
+    nose    = new_cube("SAT_Nose",   size=(0.18, 0.20, 0.16), loc=(0.55, 0, 0));       nose.data.materials.append(mat_frame);  nose.parent = root
+    mast    = new_cyl( "SAT_Mast",   radius=0.02, depth=0.5,  loc=(0.0, 0.0, 0.42),   rot=(math.radians(90),0,0)); mast.data.materials.append(mat_frame);  mast.parent = root
+    dish    = new_cyl( "SAT_Dish",   radius=0.20, depth=0.03, loc=(0.72, 0, 0),        rot=(0, math.radians(90), 0)); dish.data.materials.append(mat_dish);   dish.parent = root
+    arm_l   = new_cube("SAT_Arm_L",  size=(0.45, 0.03, 0.03), loc=(0, 0.40, 0));       arm_l.data.materials.append(mat_frame);  arm_l.parent = root
+    arm_r   = new_cube("SAT_Arm_R",  size=(0.45, 0.03, 0.03), loc=(0, -0.40, 0));      arm_r.data.materials.append(mat_frame);  arm_r.parent = root
+    panel_l = new_cube("SAT_Panel_L",size=(0.95, 0.30, 0.02), loc=(0, 0.90, 0));       panel_l.data.materials.append(mat_panel); panel_l.parent = root
+    panel_r = new_cube("SAT_Panel_R",size=(0.95, 0.30, 0.02), loc=(0, -0.90, 0));      panel_r.data.materials.append(mat_panel); panel_r.parent = root
+
+    root.location = (orbit_r, 0, 0)
+    root.scale = (scale_factor, scale_factor, scale_factor)
+    root.parent = pivot_obj
+    return root
+
+# ============================================================
+# BUILD SYSTEM
+# ============================================================
+def build_system():
+    planets = {}
+
+    sun_obj = get_object(SUN_OBJECT_NAME, "Sun")
+    sun_mesh = find_planet_mesh(sun_obj) if sun_obj else None
+
+    if sun_obj:
+        world_matrix = sun_obj.matrix_world.copy()
+        sun_obj.parent = None
+        sun_obj.matrix_world = world_matrix
+        sun_obj.location = (0, 0, 0)
+
+    if sun_obj and sun_mesh:
+        apply_target_radius(sun_obj, sun_mesh, SUN_RADIUS_FALLBACK)
+        sun_radius = SUN_RADIUS_FALLBACK
+    elif sun_obj:
+        sun_radius = object_radius(sun_obj)
+        if sun_radius <= 1.0:
+            sun_radius = SUN_RADIUS_FALLBACK
+            sun_obj.scale = (SUN_RADIUS_FALLBACK, SUN_RADIUS_FALLBACK, SUN_RADIUS_FALLBACK)
+    else:
+        sun_radius = SUN_RADIUS_FALLBACK
+
+    sun_light_data = bpy.data.lights.new(name="Sun_Point_Data", type='POINT')
+    sun_point = bpy.data.objects.new(name="Sun_Point", object_data=sun_light_data)
+    bpy.context.collection.objects.link(sun_point)
+    sun_point.location = (0, 0, 0)
+    sun_point.data.energy = SUN_POINT_ENERGY
+    sun_point.data.shadow_soft_size = sun_radius * 0.5
+    sun_point.data.use_shadow = True
+
+    sun_pivot = add_anchor("Sun_Pivot", location=(0,0,0))
+    sun_target = sun_obj if sun_obj else sun_pivot
+
+    planets["Sun"] = {
+        "pivot": sun_pivot,
+        "planet": sun_target,
+        "mesh": sun_obj,
+        "orbit_r": 0.0,
+        "radius": sun_radius,
+    }
+
+    for (pname, orbit_r, orb_period, rot_period, axial_tilt) in PLANET_DATA:
+        obj_name = PLANET_OBJECT_NAMES.get(pname)
+        root_obj = get_object(obj_name, pname)
+        if root_obj is None:
+            continue
+
+        mesh_obj = find_planet_mesh(root_obj)
+        if mesh_obj is None:
+            continue
+
+        pivot = add_anchor(f"{pname}_Pivot")
+
+        world_matrix = root_obj.matrix_world.copy()
+        root_obj.parent = None
+        root_obj.matrix_world = world_matrix
+
+        root_obj.rotation_euler.x = math.radians(axial_tilt)
+        root_obj.location = (orbit_r, 0, 0)
+        root_obj.parent = pivot
+
+        if MAKE_PLANETS_UNLIT:
+            strength = PLANET_UNLIT_STRENGTH_OVERRIDES.get(pname, PLANET_UNLIT_STRENGTH)
+            make_planet_unlit_recursive(root_obj, strength=strength)
+
+        target_radius = PLANET_TARGET_RADIUS.get(pname)
+        if mesh_obj is not None and target_radius:
+            apply_target_radius(root_obj, mesh_obj, target_radius)
+
+        planets[pname] = {
+            "pivot": pivot,
+            "planet": root_obj,
+            "mesh": mesh_obj,
+            "orbit_r": orbit_r,
+            "radius": target_radius if target_radius else (object_radius(mesh_obj) if mesh_obj is not None else 1.0),
+        }
+
+    if "Earth" in planets:
+        earth_pivot = planets["Earth"]["pivot"]
+        earth_orbit_r = planets["Earth"]["orbit_r"]
+        earth_r = planets["Earth"]["radius"]
+
+        moon_radius = earth_r * 0.42
+        moon_orbit_r = earth_r * 4.2
+
+        moon_pivot = add_anchor("Moon_Pivot", location=(earth_orbit_r, 0, 0))
+        moon_pivot.parent = earth_pivot
+
+        moon = add_globe("Moon", moon_radius, location=(moon_orbit_r, 0, 0))
+        moon.parent = moon_pivot
+
+        moon_mat = make_surface_shader("Moon_Mat", texture_path=None, fallback_color=(0.7, 0.7, 0.7, 1.0), strength=1.5)
+        if moon.data.materials: moon.data.materials[0] = moon_mat
+        else: moon.data.materials.append(moon_mat)
+        set_no_shadow(moon)
+
+        moon_pivot.rotation_euler = (0, 0, 0)
+        moon_pivot.keyframe_insert(data_path="rotation_euler", frame=1)
+        moon_pivot.rotation_euler.z = math.radians(360 * 13)
+        moon_pivot.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+        set_interp(moon_pivot, 'LINEAR')
+
+        sat_orbit_r = earth_r * 1.6
+        sat_pivot = add_anchor("Satellite_Pivot", location=(earth_orbit_r, 0, 0))
+        sat_pivot.parent = earth_pivot
+
+        sat_scale = earth_r * 0.25
+        sat_body = generate_satellite_in_scene(sat_orbit_r, sat_pivot, sat_scale)
+
+        sat_pivot.rotation_euler = (math.radians(28), 0, 0)
+        sat_pivot.keyframe_insert(data_path="rotation_euler", frame=1)
+        sat_pivot.rotation_euler = (math.radians(28), 0, math.radians(360 * 12))
+        sat_pivot.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+        set_interp(sat_pivot, 'LINEAR')
+
+        sat_body.rotation_euler = (0, 0, 0)
+        sat_body.keyframe_insert(data_path="rotation_euler", frame=1)
+        sat_body.rotation_euler.y = math.radians(360 * 3)
+        sat_body.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+        set_interp(sat_body, 'LINEAR')
+
+        # ---- TOY ROCKET (from BlenderKit) ----
+        rocket_obj = get_object("Toy Rocket", "Rocket")
+        if rocket_obj:
+            world_matrix = rocket_obj.matrix_world.copy()
+            rocket_obj.parent = None
+            rocket_obj.matrix_world = world_matrix
+
+            try:
+                rocket_obj.hide_viewport = False
+                rocket_obj.hide_render = False
+                rocket_obj.hide_set(False)
+                bpy.ops.object.select_all(action='DESELECT')
+                rocket_obj.select_set(True)
+                bpy.context.view_layer.objects.active = rocket_obj
+                bpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='BOUNDS')
+            except Exception as e:
+                print(f"[WARN] Failed to center origin: {e}")
+
+            make_planet_unlit_recursive(rocket_obj, strength=1.2)
+
+            rocket_orbit_r = earth_r * 2.8
+
+            rocket_inclination = add_anchor("Rocket_Inclination", location=(earth_orbit_r, 0, 0))
+            rocket_inclination.parent = earth_pivot
+            rocket_inclination.rotation_euler = (math.radians(30), math.radians(-20), 0)
+
+            rocket_spin = add_anchor("Rocket_Spin", location=(0, 0, 0))
+            rocket_spin.parent = rocket_inclination
+
+            rocket_spin.rotation_euler = (0, 0, 0)
+            rocket_spin.keyframe_insert(data_path="rotation_euler", frame=1)
+            rocket_spin.rotation_euler = (0, 0, math.radians(360 * -12))
+            rocket_spin.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+            set_interp(rocket_spin, 'LINEAR')
+
+            rocket_obj.parent = rocket_spin
+            rocket_obj.location = (rocket_orbit_r, 0, 0)
+
+            def get_true_radius(obj):
+                r = 0.0
+                if obj.type == 'MESH':
+                    r = max(obj.dimensions.x, obj.dimensions.y, obj.dimensions.z) / 2.0
+                for c in obj.children:
+                    r = max(r, get_true_radius(c))
+                return r
+
+            rocket_r = get_true_radius(rocket_obj)
+            if rocket_r <= 0:
+                rocket_r = object_radius(rocket_obj)
+
+            target_rocket_r = earth_r * 0.20
+            if rocket_r > 0:
+                factor = target_rocket_r / rocket_r
+                rocket_obj.scale = (factor, factor, factor)
+
+            rocket_obj.rotation_mode = 'XYZ'
+            rocket_obj.rotation_euler = (math.radians(-90), 0, 0)
+            rocket_obj.keyframe_insert(data_path="rotation_euler", frame=1)
+            rocket_obj.rotation_euler = (math.radians(-90), 0, math.radians(360 * 15))
+            rocket_obj.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+            set_interp(rocket_obj, 'LINEAR')
+
+    return planets
+
+# ============================================================
+# ORBIT LINES
+# ============================================================
+def render_orbit_lines(planets):
+    mat = bpy.data.materials.new("Orbit_Line_Mat")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new("ShaderNodeOutputMaterial")
+    em = nodes.new("ShaderNodeEmission")
+    tr = nodes.new("ShaderNodeBsdfTransparent")
+    mx = nodes.new("ShaderNodeMixShader")
+
+    em.inputs["Color"].default_value = (0.1, 0.4, 1.0, 1.0)
+    em.inputs["Strength"].default_value = 2.0
+    mx.inputs[0].default_value = 0.8
+
+    links.new(tr.outputs["BSDF"], mx.inputs[1])
+    links.new(em.outputs["Emission"], mx.inputs[2])
+    links.new(mx.outputs["Shader"], out.inputs["Surface"])
+
+    mat.blend_method = "BLEND"
+    if hasattr(mat, "shadow_method"):
+        mat.shadow_method = "NONE"
+
+    segs = 256
+    for (pname, orbit_r, *_rest) in PLANET_DATA:
+        if pname not in planets:
+            continue
+        cd = bpy.data.curves.new(name=f"Orbit_{pname}", type='CURVE')
+        cd.dimensions = '3D'
+        cd.bevel_depth = 0.01
+        cd.use_fill_caps = True
+        sp = cd.splines.new('POLY')
+        sp.use_cyclic_u = True
+        sp.points.add(segs - 1)
+        for i, pt in enumerate(sp.points):
+            a = (2 * math.pi * i) / segs
+            pt.co = (orbit_r * math.cos(a), orbit_r * math.sin(a), 0.0, 1.0)
+        ob = bpy.data.objects.new(f"Orbit_{pname}", cd)
+        bpy.context.collection.objects.link(ob)
+        ob.data.materials.append(mat)
+        set_no_shadow(ob)
+
+# ============================================================
+# ASTEROIDS
+# ============================================================
+def place_debris():
+    root = add_anchor("AsteroidField_Root")
+
+    root.rotation_euler = (0, 0, 0)
+    root.keyframe_insert(data_path="rotation_euler", frame=1)
+    root.rotation_euler.z = math.radians(360 * 2)
+    root.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+    set_interp(root, 'LINEAR')
+
+    mat = bpy.data.materials.new("Asteroid_Mat")
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    nodes.clear()
+
+    out = nodes.new("ShaderNodeOutputMaterial")
+    out.location = (500, 0)
+
+    principled = nodes.new("ShaderNodeBsdfPrincipled")
+    principled.location = (300, 0)
+
+    def set_val(n, v):
+        inp = principled.inputs.get(n)
+        if inp is not None:
+            inp.default_value = v
+
+    set_val("Base Color", (0, 0, 0, 1))
+    set_val("Specular", 0.0)
+    set_val("Specular IOR Level", 0.0)
+    set_val("Roughness", 1.0)
+    set_val("Metallic", 0.0)
+
+    em_color = principled.inputs.get("Emission Color") or principled.inputs.get("Emission")
+    em_strength = principled.inputs.get("Emission Strength")
+    if em_strength:
+        em_strength.default_value = ASTEROID_STRENGTH
+
+    tex = nodes.new("ShaderNodeTexImage")
+    tex.location = (-200, 0)
+    tex.projection = 'BOX'
+    tex.projection_blend = 0.25
+
+    coord = nodes.new("ShaderNodeTexCoord")
+    coord.location = (-400, 0)
+    links.new(coord.outputs["Object"], tex.inputs["Vector"])
+
+    ast_tex = resolve_asset_path("Asteroid.jpg")
+    loaded = False
+    if os.path.exists(ast_tex):
+        try:
+            tex.image = bpy.data.images.load(ast_tex, check_existing=True)
+            loaded = True
+        except Exception:
+            pass
+
+    if loaded:
+        ramp = nodes.new("ShaderNodeValToRGB")
+        ramp.location = (50, 0)
+        ramp.color_ramp.elements[0].position = 0.1
+        ramp.color_ramp.elements[0].color = (0.2, 0.2, 0.2, 1.0)
+        ramp.color_ramp.elements[1].position = 0.8
+        ramp.color_ramp.elements[1].color = (1.0, 1.0, 1.0, 1.0)
+
+        links.new(tex.outputs["Color"], ramp.inputs["Fac"])
+        if em_color: links.new(ramp.outputs["Color"], em_color)
+    else:
+        noise = nodes.new("ShaderNodeTexNoise")
+        noise.location = (-300, 0)
+        noise.inputs["Scale"].default_value = 8.0
+
+        ramp = nodes.new("ShaderNodeValToRGB")
+        ramp.location = (-100, 0)
+        ramp.color_ramp.elements[0].color = (0.3, 0.3, 0.3, 1.0)
+        ramp.color_ramp.elements[1].color = (0.7, 0.7, 1.0, 1.0)
+
+        links.new(coord.outputs["Object"], noise.inputs["Vector"])
+        links.new(noise.outputs["Fac"], ramp.inputs["Fac"])
+        if em_color: links.new(ramp.outputs["Color"], em_color)
+
+    links.new(principled.outputs["BSDF"], out.inputs["Surface"])
+
+    # Asteroids are self-lit emission shaders - they don't need to cast/receive
+    # realistic shadows, so skip that pass for all 600 of them.
+    if hasattr(mat, "shadow_method"):
+        mat.shadow_method = "NONE"
+
+    mesh = bpy.data.meshes.new("Asteroid_Mesh")
+    bm = bmesh.new()
+    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
+
+    for v in bm.verts:
+        v.co.x *= random.uniform(0.8, 1.2)
+        v.co.y *= random.uniform(0.8, 1.2)
+        v.co.z *= random.uniform(0.8, 1.2)
+
+    bm.to_mesh(mesh)
+    bm.free()
+
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+
+    mesh.materials.append(mat)
+
+    for i in range(ASTEROID_COUNT):
+        # Single shared mesh datablock ("Asteroid_Mesh") reused for every
+        # asteroid - only the object-level transform differs per instance.
+        a = bpy.data.objects.new(f"Asteroid_{i:02d}", mesh)
+        bpy.context.collection.objects.link(a)
+
+        base_scale = random.uniform(0.04, 0.12)
+        a.scale = (base_scale * random.uniform(0.8, 1.2),
+                   base_scale * random.uniform(0.8, 1.2),
+                   base_scale * random.uniform(0.5, 1.5))
+
+        r = random.uniform(25.0, 160.0)
+        theta = random.uniform(0, 2 * math.pi)
+        z = random.uniform(-4.0, 4.0)
+
+        a.location = (r * math.cos(theta), r * math.sin(theta), z)
+        a.parent = root
+        set_no_shadow(a)
+
+        a.rotation_euler = (random.uniform(0, 6.28), random.uniform(0, 6.28), random.uniform(0, 6.28))
+        if ASTEROID_SELF_SPIN:
+            a.keyframe_insert(data_path="rotation_euler", frame=1)
+            a.rotation_euler.x += random.uniform(-8.0, 8.0)
+            a.rotation_euler.y += random.uniform(-8.0, 8.0)
+            a.rotation_euler.z += random.uniform(-8.0, 8.0)
+            a.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+            set_interp(a, 'LINEAR')
+        # else: each rock keeps a random static orientation (no animation data),
+        # so the field still reads as varied and tumbled-looking, just without
+        # 600 x 3 fcurves for Blender to evaluate every frame.
+
+# ============================================================
+# MOTION
+# ============================================================
+def run_motion(planets):
+    for (pname, _, orb_period, _, axial_tilt) in PLANET_DATA:
+        if pname not in planets: continue
+        pivot = planets[pname]["pivot"]
+        planet = planets[pname]["planet"]
+
+        deg_per_frame = 360.0 / (orb_period / SPEED_SCALE)
+        pivot.rotation_euler = (0, 0, 0)
+        pivot.keyframe_insert(data_path="rotation_euler", frame=1)
+        pivot.rotation_euler.z = math.radians(deg_per_frame * FRAME_END)
+        pivot.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+        set_interp(pivot, 'LINEAR')
+
+        planet.rotation_euler = (math.radians(axial_tilt), 0, 0)
+        planet.keyframe_insert(data_path="rotation_euler", frame=1)
+        planet.rotation_euler = (math.radians(axial_tilt), 0, math.radians(0.5 * FRAME_END))
+        planet.keyframe_insert(data_path="rotation_euler", frame=FRAME_END)
+        set_interp(planet, 'LINEAR')
+
+# ============================================================
+# LABELS
+# ============================================================
+def add_name_tags(planets, cam_obj, blocks):
+    font_path = resolve_asset_path("SpaceGrotesk-VariableFont_wght.ttf")
+    label_objs = {}
+
+    for pname, pdata in planets.items():
+        prad = pdata["radius"]
+        pivot = pdata["pivot"]
+        orbit_r = pdata["orbit_r"]
+        lp = prad * 2.5 if pname == "Saturn" else prad
+
+        rig = add_anchor(f"LabelRig_{pname}", location=(orbit_r, 0, 0))
+        rig.parent = pivot
+        t = rig.constraints.new(type='TRACK_TO')
+        t.target = cam_obj
+        t.track_axis = 'TRACK_Z'
+        t.up_axis = 'UP_Y'
+
+        txt_data = bpy.data.curves.new(name=f"TextData_{pname}", type='FONT')
+        txt = bpy.data.objects.new(name=f"Label_{pname}", object_data=txt_data)
+        bpy.context.collection.objects.link(txt)
+
+        txt.parent = rig
+
+        display_name = "THE SUN" if pname == "Sun" else pname.upper()
+        txt.data.body = display_name
+
+        txt.data.size = lp * 0.35
+        txt.data.align_x = 'LEFT'
+        txt.location = (lp * 1.3, lp * 0.2, 0)
+
+        if os.path.exists(font_path):
+            try: txt.data.font = bpy.data.fonts.load(font_path)
+            except Exception: pass
+
+        m = bpy.data.materials.new(f"Label_{pname}_Mat")
+        m.use_nodes = True
+        n = m.node_tree.nodes
+        l = m.node_tree.links
+        n.clear()
+
+        o = n.new("ShaderNodeOutputMaterial")
+        em = n.new("ShaderNodeEmission")
+
+        em.inputs["Color"].default_value = (1.0, 1.0, 1.0, 1.0)
+        em.inputs["Strength"].default_value = 1.2
+
+        l.new(em.outputs["Emission"], o.inputs["Surface"])
+        txt.data.materials.append(m)
+        set_no_shadow(txt)
+        label_objs[pname] = txt
+
+        txt.hide_viewport = True
+        txt.hide_render = True
+        txt.keyframe_insert(data_path="hide_viewport", frame=1)
+        txt.keyframe_insert(data_path="hide_render", frame=1)
+
+    for (pname, b_start, b_end) in blocks:
+        if pname not in label_objs: continue
+        txt = label_objs[pname]
+
+        txt.keyframe_insert(data_path="hide_viewport", frame=b_start - 1)
+        txt.keyframe_insert(data_path="hide_render", frame=b_start - 1)
+
+        txt.hide_viewport = False
+        txt.hide_render = False
+        txt.keyframe_insert(data_path="hide_viewport", frame=b_start)
+        txt.keyframe_insert(data_path="hide_render", frame=b_start)
+
+        txt.keyframe_insert(data_path="hide_viewport", frame=b_end - 1)
+        txt.keyframe_insert(data_path="hide_render", frame=b_end - 1)
+
+        txt.hide_viewport = True
+        txt.hide_render = True
+        txt.keyframe_insert(data_path="hide_viewport", frame=b_end)
+        txt.keyframe_insert(data_path="hide_render", frame=b_end)
+
+# ============================================================
+# CAMERA
+# ============================================================
+def setup_camera_rig(planets):
+    cam_focus = add_anchor("CameraFocus")
+    cam_rig = add_anchor("CameraRig")
+
+    cam_data = bpy.data.cameras.new(name="MainCamera_Data")
+    cam = bpy.data.objects.new(name="MainCamera", object_data=cam_data)
+    bpy.context.collection.objects.link(cam)
+    bpy.context.scene.camera = cam
+
+    cam.parent = cam_rig
+    cam.data.dof.use_dof = True
+    cam.data.dof.focus_object = cam_focus
+
+    trans_len = 35
+
+    cam.data.dof.aperture_fstop = 16.0
+    cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=1)
+    cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=200 - trans_len)
+
+    cam.data.dof.aperture_fstop = 2.8
+    cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=200)
+    cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=1200)
+
+    cam.data.dof.aperture_fstop = 16.0
+    cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=1200 + trans_len)
+    cam.data.dof.keyframe_insert(data_path="aperture_fstop", frame=1500)
+
+    tr = cam.constraints.new(type='TRACK_TO')
+    tr.target = cam_focus
+    tr.track_axis = 'TRACK_NEGATIVE_Z'
+    tr.up_axis = 'UP_Y'
+
+    targets = {pname: pdata["planet"] for pname, pdata in planets.items()}
+
+    for k, tgt in targets.items():
+        c1 = cam_rig.constraints.new(type='COPY_LOCATION')
+        c1.name = f"Lock_{k}"
+        c1.target = tgt
+        c1.influence = 0.0
+
+        c2 = cam_focus.constraints.new(type='COPY_LOCATION')
+        c2.name = f"Lock_{k}"
+        c2.target = tgt
+        c2.influence = 0.0
+
+    def lock(name, frame, inf):
+        if name not in targets: return
+        for o in (cam_rig, cam_focus):
+            c = o.constraints.get(f"Lock_{name}")
+            c.influence = inf
+            c.keyframe_insert(data_path="influence", frame=frame)
+
+    for k in targets:
+        lock(k, 1, 0.0)
+
+    lock("Sun", 1, 1.0)
+
+    cam.location = (0, -350, 250)
+    cam.keyframe_insert(data_path="location", frame=1)
+
+    cam.location = (0, -250, 100)
+    cam.keyframe_insert(data_path="location", frame=200 - trans_len)
+
+    seq = ["Sun"] + [p[0] for p in PLANET_DATA if p[0] in planets]
+    block = 1000 // len(seq)
+    blocks = []
+    prev = "Sun"
+
+    for i, pname in enumerate(seq):
+        shot_start = 200 + i * block
+        shot_end = 200 + (i + 1) * block
+        if i == len(seq) - 1:
+            shot_end = 1200
+
+        bs = shot_start if i == 0 else shot_start + trans_len
+        be = shot_end
+
+        blocks.append((pname, bs, be))
+
+        r = planets[pname]["radius"]
+        dist   = max(r * 12.0, 1.2)
+        height = max(r * 1.5, 0.3)
+        q1 = bs + int((be - bs) * 0.5)
+
+        if i > 0:
+            lock(prev, shot_start, 1.0)
+            lock(pname, shot_start, 0.0)
+
+            lock(prev, bs, 0.0)
+            lock(pname, bs, 1.0)
+        else:
+            lock(pname, bs, 1.0)
+
+        lock(pname, be, 1.0)
+
+        cam.location = (dist, -dist, height)
+        cam.keyframe_insert(data_path="location", frame=bs)
+
+        cam.location = (dist * 1.2, 0, height * 1.2)
+        cam.keyframe_insert(data_path="location", frame=q1)
+
+        cam.location = (dist, dist, height)
+        cam.keyframe_insert(data_path="location", frame=be)
+
+        prev = pname
+
+    lock(prev, 1200, 1.0)
+    lock("Sun", 1200, 0.0)
+
+    lock(prev, 1200 + trans_len, 0.0)
+    lock("Sun", 1200 + trans_len, 1.0)
+    lock("Sun", 1500, 1.0)
+
+    cam.location = (0, -200, 80)
+    cam.keyframe_insert(data_path="location", frame=1200 + trans_len)
+
+    cam.location = (0, -420, 260)
+    cam.keyframe_insert(data_path="location", frame=1450)
+
+    cam.location = (0, -450, 270)
+    cam.keyframe_insert(data_path="location", frame=1500)
+
+    set_interp(cam_rig,   'BEZIER')
+    set_interp(cam_focus, 'BEZIER')
+    set_interp(cam,       'BEZIER')
+
+    return cam, blocks
+
+# ============================================================
+# MAIN
+# ============================================================
+def launch():
+    print("[1/5] Scene")
+    build_environment()
+    print("[2/5] System")
+    planets = build_system()
+    print("[2b/5] Orbit lines")
+    render_orbit_lines(planets)
+    print("[2c/5] Asteroids")
+    place_debris()
+    print("[3/5] Motion")
+    run_motion(planets)
+    print("[4/5] Camera")
+    cam, blocks = setup_camera_rig(planets)
+    print("[5/5] Labels")
+    add_name_tags(planets, cam, blocks)
+    bpy.context.scene.frame_set(1)
+    bpy.context.view_layer.update()
+    print("Done. Press SPACE to preview.")
+
+launch()

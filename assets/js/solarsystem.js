@@ -160,6 +160,22 @@ const planetaryData = [
         ratio: 248.09,
         sizeLabel: "0.18x",
         sizePercent: 2
+    },
+    {
+        id: "moon",
+        name: "Moon",
+        shortName: "MOO",
+        type: "NATURAL SATELLITE · EARTH'S COMPANION",
+        age: null,
+        period: "27.3 Earth days",
+        distance: "384,400 km",
+        description: "The Moon is Earth's only natural satellite and the fifth largest moon in the solar system. Its surface is covered with craters from asteroid impacts, and it plays a key role in Earth's tides. The Moon is tidally locked, meaning the same face always points toward Earth.",
+        color: "#c0c0c0",
+        icon: "../images/Moon.jpg",
+        video: "./videos/Moon.mp4",
+        ratio: 0.0747,
+        sizeLabel: "0.27x",
+        sizePercent: 27
     }
 ];
 
